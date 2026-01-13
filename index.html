@@ -12,7 +12,7 @@
   :root{
     --bg1:#0f1020; --bg2:#1a0933; --ink:#f7f7fb; --muted:#c7c7d7;
     --accent:#7c5cff; --accent2:#00e0a4; --bad:#ff5c7a; --warn:#ffd166;
-    --card:#141429; --glass:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.35);
+    --card:#141429; --shadow:0 10px 30px rgba(0,0,0,.35);
     --radius:18px;
   }
   *{box-sizing:border-box}
@@ -25,10 +25,16 @@
       linear-gradient(120deg,var(--bg1),var(--bg2));
     overflow-x:hidden;
   }
+
+  /* Pynt */
   .blob{position:fixed; pointer-events:none; filter:blur(30px); opacity:.5; z-index:0}
   .b1{width:240px;height:240px;background:#7c5cff;top:10%;left:5%;border-radius:50% 40% 60% 50%}
   .b2{width:280px;height:280px;background:#00e0a4;bottom:8%;right:6%;border-radius:50% 60% 45% 55%}
-  @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-12px)}100%{transform:translateY(0)}}
+  @keyframes floaty{
+    0%{transform:translateY(0)}
+    50%{transform:translateY(-12px)}
+    100%{transform:translateY(0)}
+  }
   .blob{animation:floaty 7s ease-in-out infinite}
 
   .wrap{position:relative;z-index:1;max-width:1150px;margin:0 auto;padding:28px 16px 48px}
@@ -224,7 +230,7 @@
   <div class="modal">
     <h3>Legg til eget substantiv</h3>
     <div class="grid3">
-      <div class="field"><label>Base (infinitivform)</label><input id="mBase" placeholder="f.eks. stol"></div>
+      <div class="field"><label>Base (grunnform)</label><input id="mBase" placeholder="f.eks. stol"></div>
       <div class="field"><label>Kjønn</label>
         <select id="mGender">
           <option value="en">en</option>
@@ -278,7 +284,7 @@
     fb.innerHTML = '⚠️ Feil i skript: ' + (msg || 'ukjent feil') + '<br><span class="note">Last siden på nytt. Hvis feilen kommer igjen, si ifra – jeg fikser det.</span>';
   };
   window.addEventListener('error', function(e){ showError(e.message); });
-  window.addEventListener('unhandledrejection', function(e){ showError((e.reason&&e.reason.message)||'Ubehandlet promise-feil'); });
+  window.addEventListener('unhandledrejection', function(e){ showError((e.reason && e.reason.message) || 'Ubehandlet promise-feil'); });
 })();
 
 /** ---------- DATA ---------- **/
@@ -534,7 +540,6 @@ function onDragStart(e){
 function onTileClick(e){
   const was = state.selectedTileId;
   const id = e.currentTarget.dataset.id;
-  // reset all
   Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
   if(was===id){ state.selectedTileId=null; return; }
   state.selectedTileId = id;
@@ -599,7 +604,7 @@ function startGame(){
   startRound();
 }
 
-/** ---------- CONFETTI ---------- **/
+/** ---------- KONFETTI ---------- **/
 const confettiCanvas = document.getElementById("confetti");
 const ctx = confettiCanvas.getContext("2d");
 let confettiPieces = [];
@@ -684,77 +689,3 @@ function bindEvents(){
   Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
     label.addEventListener("click", ()=>{
       Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
-      label.classList.add("active");
-      const val = label.querySelector("input").value;
-      setMode(val);
-    });
-  });
-
-  // Tema
-  Array.from(document.querySelectorAll("#themeRow .chip")).forEach(chip=>{
-    chip.addEventListener("click", ()=>{
-      const cb = chip.querySelector("input");
-      cb.checked = !cb.checked;
-      chip.classList.toggle("active", cb.checked);
-      const sel = Array.from(document.querySelectorAll("#themeRow input:checked")).map(i=>i.value);
-      state.selectedThemes = sel.length? sel : ["skole"];
-    });
-  });
-
-  // Vanskelighet
-  byId("easy").addEventListener("click", ()=>{
-    byId("easy").classList.add("active"); byId("hard").classList.remove("active");
-    state.size = 8;
-  });
-  byId("hard").addEventListener("click", ()=>{
-    byId("hard").classList.add("active"); byId("easy").classList.remove("active");
-    state.size = 12;
-  });
-
-  // Start/Next/Reset/Shuffle/Hint
-  byId("startBtn").addEventListener("click", startGame);
-  byId("nextBtn").addEventListener("click", startRound);
-  byId("resetBtn").addEventListener("click", ()=>{ localStorage.removeItem("nounBest"); state.best=0; updateHUD(); });
-  byId("shuffleBtn").addEventListener("click", ()=>{
-    const pool = byId("pool");
-    const tiles = Array.from(pool.querySelectorAll(".tile"));
-    for(let i=tiles.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      pool.insertBefore(tiles[j], tiles[i]);
-      const tmp = tiles[i]; tiles[i] = tiles[j]; tiles[j] = tmp;
-    }
-  });
-  byId("hintBtn").addEventListener("click", ()=>{
-    const fb = byId("feedback");
-    fb.style.display="block"; fb.className="feedback";
-    fb.innerHTML = `🔎 <b>Hint:</b> 
-      <ul style="margin:6px 0 0 18px">
-        <li><b>Entall</b>: én/ett. <b>Flertall</b>: flere.</li>
-        <li><b>Ubestemt</b>: en/ei/et + ordet (eller flertall uten -ene). <b>Bestemt</b>: endelse som <i>-en/-a/-et/-ene</i>.</li>
-        <li><b>Egennavn</b> skrives med stor forbokstav (Oslo, Norge, Ahmed).</li>
-        <li><b>Kjønn</b>: en‑, ei‑, et‑ord (her bruker vi skolebøyning – noen sier også «en bok»).</li>
-      </ul>`;
-  });
-
-  // Modal
-  byId("addWordBtn").addEventListener("click", openModal);
-  byId("mCancel").addEventListener("click", closeModal);
-  byId("mSave").addEventListener("click", saveWordFromModal);
-  byId("mBase").addEventListener("input", suggestForms);
-  byId("mGender").addEventListener("change", suggestForms);
-  Array.from(byId("mThemes").querySelectorAll(".tag")).forEach(tag=>{
-    tag.addEventListener("click", ()=> tag.classList.toggle("active"));
-  });
-
-  // Init
-  setMode(state.mode);
-  updateHUD();
-}
-
-// Kall binding umiddelbart (script ligger på slutten av body → DOM finnes allerede)
-try { bindEvents(); } catch(e){ /* hvis DOM ikke er klart enda, tar DOMContentLoaded det */ }
-// Og i tillegg på DOMContentLoaded som fallback
-document.addEventListener("DOMContentLoaded", ()=>{ try{ bindEvents(); }catch(e){} });
-</script>
-</body>
-</html>
