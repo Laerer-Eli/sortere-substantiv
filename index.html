@@ -1,10 +1,99 @@
 
 <!doctype html>
 <html lang="no">
-<meta charset="utf-8">
-<title>Test</title>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VerbSpill – testbasis</title>
+<style>
+  body{margin:0; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; background:#121629; color:#fff}
+  .wrap{max-width:880px; margin:40px auto; padding:16px}
+  .card{background:#1b1f3a; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:16px}
+  h1{margin:0 0 8px}
+  .btn{background:#00e0a4; border:none; color:#09231a; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer}
+  .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-top:10px}
+  .choice{background:#22284a; border:1px solid rgba(255,255,255,.14); padding:10px; border-radius:10px; cursor:pointer}
+  .feedback{margin-top:10px; padding:10px; border-radius:10px; display:none}
+  .good{background:rgba(0,224,164,.15); border:1px solid #00e0a4}
+  .bad{background:rgba(255,92,122,.15); border:1px solid #ff5c7a}
+</style>
+</head>
 <body>
-  <h1>Det funker! 🎉</h1>
-  <p>Denne siden er servert fra GitHub Pages.</p>
+<div class="wrap">
+  <h1>VerbSpill – test</h1>
+  <p>Hvis du ser dette, kjører HTML/CSS/JS riktig. Trykk “Start” for en oppgave.</p>
+  <div class="card">
+    <div id="prompt">Trykk Start …</div>
+    <div class="choices" id="choices" style="display:none"></div>
+    <div class="feedback" id="fb"></div>
+    <div style="margin-top:10px">
+      <button class="btn" id="startBtn">Start</button>
+      <button class="btn" id="nextBtn" disabled>Neste</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const VERBS = {
+  "spise": {presens:["spiser"], preteritum:["spiste"], perfektum:["spist"]},
+  "gå": {presens:["går"], preteritum:["gikk"], perfektum:["gått"]},
+  "drikke": {presens:["drikker"], preteritum:["drakk"], perfektum:["drukket"]},
+};
+const TEMPLATES = {
+  presens: [{text:"Jeg ___ frokost nå.", verbs:["spise"]}],
+  preteritum: [{text:"I går ___ jeg til butikken.", verbs:["gå"]}],
+  perfektum: [{text:"Jeg har ___ vann i dag.", verbs:["drikke"]}],
+};
+
+function rand(a){ return a[Math.floor(Math.random()*a.length)] }
+const normalize = s => (s||"").trim().toLowerCase();
+
+let current = null;
+
+function genQ(){
+  const tense = rand(["presens","preteritum","perfektum"]);
+  const t = rand(TEMPLATES[tense]);
+  const inf = rand(t.verbs);
+  const forms = VERBS[inf][tense];
+  const correct = rand(forms);
+  const prompt = t.text.replace("___","<b>___</b>")+" ("+tense+")";
+  // Distraktorer
+  const pool = Object.values(VERBS).map(v=>rand(v[tense]));
+  let opts = [correct];
+  while(opts.length<4){
+    const x = rand(pool);
+    if(!opts.includes(x)) opts.push(x);
+  }
+  return {prompt, options: opts.sort(()=>Math.random()-0.5), correctForms: forms};
+}
+
+function render(q){
+  document.getElementById("prompt").innerHTML = q.prompt;
+  const wrap = document.getElementById("choices");
+  wrap.innerHTML = ""; wrap.style.display="grid";
+  q.options.forEach(o=>{
+    const b = document.createElement("button"); b.className="choice"; b.textContent=o;
+    b.onclick=()=>check(o);
+    wrap.appendChild(b);
+  });
+  document.getElementById("fb").style.display="none";
+  document.getElementById("nextBtn").disabled=true;
+}
+
+function check(val){
+  const ok = current.correctForms.some(f=>normalize(f)===normalize(val));
+  const fb = document.getElementById("fb");
+  fb.style.display="block"; fb.className = "feedback " + (ok?"good":"bad");
+  fb.innerHTML = ok ? "✅ Riktig!" : "❌ Riktig svar: <b>"+current.correctForms[0]+"</b>";
+  document.getElementById("nextBtn").disabled=false;
+}
+
+document.getElementById("startBtn").onclick = ()=>{
+  current = genQ(); render(current);
+};
+document.getElementById("nextBtn").onclick = ()=>{
+  current = genQ(); render(current);
+};
+</script>
 </body>
 </html>
