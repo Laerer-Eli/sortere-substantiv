@@ -31,7 +31,7 @@
   @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-12px)}100%{transform:translateY(0)}}
   .blob{animation:floaty 7s ease-in-out infinite}
 
-  .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 16px 48px}
+  .wrap{position:relative;z-index:1;max-width:1150px;margin:0 auto;padding:28px 16px 48px}
   header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
   .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#7c5cff,#00e0a4);display:grid;place-items:center;box-shadow:var(--shadow)}
   .logo svg{width:28px;height:28px;fill:white}
@@ -42,7 +42,7 @@
          border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow); border-radius:var(--radius); padding:16px}
 
   .controls{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start;margin-bottom:14px}
-  @media (max-width:920px){.controls{grid-template-columns:1fr}}
+  @media (max-width:980px){.controls{grid-template-columns:1fr}}
 
   .card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:var(--radius);padding:14px}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -69,6 +69,7 @@
   .board{display:grid;grid-template-columns:1fr;gap:12px}
   .bins{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .bins.three{grid-template-columns:repeat(3,1fr)}
+  .bins.four{grid-template-columns:repeat(4,1fr)}
   .bin{background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.22);border-radius:14px;padding:10px;min-height:140px}
   .binHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .binTitle{font-weight:800;letter-spacing:.4px}
@@ -91,6 +92,23 @@
 
   /* Konfetti */
   canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:5}
+
+  /* Modal for egne ord */
+  .modalBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;place-items:center;z-index:10}
+  .modal{background:var(--card);border:1px solid rgba(255,255,255,.18);border-radius:14px;max-width:620px;width:92%;
+          box-shadow:var(--shadow);padding:14px}
+  .modal h3{margin:0 0 8px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:13px;color:var(--muted)}
+  .field input, .field select{
+    padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);color:#fff;outline:none
+  }
+  .tagbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .tag{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 10px;cursor:pointer}
+  .tag.active{border-color:var(--accent2);background:rgba(0,224,164,.14)}
 </style>
 </head>
 <body>
@@ -111,18 +129,35 @@
   <section class="panel">
     <div class="controls">
       <div class="card">
-        <h3>Velg modus</h3>
+        <h3>Velg modul og tema</h3>
         <div class="row" id="modeRow">
           <label class="chip active"><input type="radio" name="mode" value="entall-flertall" checked> Entall / Flertall</label>
           <label class="chip"><input type="radio" name="mode" value="ubestemt-bestemt"> Ubestemt / Bestemt</label>
           <label class="chip"><input type="radio" name="mode" value="felles-egennavn"> Fellesnavn / Egennavn</label>
           <label class="chip"><input type="radio" name="mode" value="kjonn"> Kjønn: en / ei / et</label>
+          <label class="chip"><input type="radio" name="mode" value="fire-bokser"> 4‑bokser (entall/ub, entall/b, flertall/ub, flertall/b)</label>
         </div>
+
+        <div style="margin-top:10px">
+          <div class="muted" style="margin-bottom:6px">Tema (velg ett eller flere):</div>
+          <div class="row" id="themeRow">
+            <label class="chip active"><input type="checkbox" value="skole" checked> Skole</label>
+            <label class="chip active"><input type="checkbox" value="butikk" checked> Butikk</label>
+            <label class="chip active"><input type="checkbox" value="helse" checked> Helse</label>
+            <label class="chip active"><input type="checkbox" value="fritid" checked> Fritid</label>
+            <label class="chip active"><input type="checkbox" value="hjem" checked> Hjem</label>
+            <label class="chip active"><input type="checkbox" value="teknologi" checked> Teknologi</label>
+            <label class="chip active"><input type="checkbox" value="familie" checked> Familie</label>
+          </div>
+        </div>
+
         <div class="row" style="margin-top:10px">
-          <label class="chip active" id="easy"><input type="radio" name="diff" value="easy" checked> Lett (8 ord)</label>
-          <label class="chip" id="hard"><input type="radio" name="diff" value="hard"> Vanskelig (12 ord)</label>
+          <label class="chip active" id="easy"><input type="radio" name="diff" value="8" checked> Lett (8 ord)</label>
+          <label class="chip" id="hard"><input type="radio" name="diff" value="12"> Vanskelig (12 ord)</label>
           <label class="chip" id="clickMode"><input type="checkbox" id="clickOnly"> Klikk i stedet for å dra</label>
+          <button class="chip" id="addWordBtn" style="font-weight:700">➕ Legg til egne ord</button>
         </div>
+
         <div class="row" style="margin-top:10px">
           <button class="btn alt" id="startBtn">Start ▶</button>
           <button class="btn ghost" id="resetBtn">Tilbakestill poeng</button>
@@ -134,422 +169,3 @@
         <h3>Statistikk</h3>
         <div class="row" style="gap:10px">
           <div class="pill"><div class="muted">Oppgave</div><div class="big" id="qNum">0</div></div>
-          <div class="pill"><div class="muted">Poeng</div><div class="big" id="score">0</div></div>
-          <div class="pill"><div class="muted">Streak</div><div class="big" id="streak">0</div></div>
-          <div class="pill"><div class="muted">Beste</div><div class="big" id="best">0</div></div>
-        </div>
-        <div class="statusbar" style="margin-top:10px">
-          <div class="progress" aria-hidden="true"><span id="prog"></span></div>
-        </div>
-        <div class="note">Tips: Klikk «Hint» under for regler og eksempler.</div>
-      </div>
-    </div>
-
-    <div class="game">
-      <div class="card">
-        <div class="statusbar">
-          <div><span class="muted">Modus</span> <strong id="modeTitle">–</strong></div>
-          <div><span class="muted">Runde</span> <strong id="roundInfo">–</strong></div>
-        </div>
-
-        <div class="board">
-          <div class="pool" id="pool" aria-label="Ord som skal sorteres"></div>
-
-          <div id="bins" class="bins"></div>
-        </div>
-
-        <div id="feedback" class="feedback" aria-live="polite"></div>
-
-        <div class="footer">
-          <div class="row">
-            <button class="btn ghost" id="hintBtn">💡 Hint</button>
-            <button class="btn ghost" id="shuffleBtn">🔄 Bland ord</button>
-          </div>
-          <div class="row">
-            <button class="btn" id="nextBtn" disabled>Neste runde ➜</button>
-          </div>
-        </div>
-      </div>
-
-      <aside class="card hint">
-        <strong>Regler i korte trekk</strong>
-        <ul style="margin-top:8px">
-          <li><b>Entall</b> = én / ett. <b>Flertall</b> = flere.</li>
-          <li><b>Ubestemt</b>: ny informasjon (f.eks. <i>en stol, stoler</i>). <b>Bestemt</b>: noe kjent (f.eks. <i>stolen, stolene</i>).</li>
-          <li><b>Fellesnavn</b> (vanlige ting/ord) vs. <b>Egennavn</b> (navn på personer, steder, merker).</li>
-          <li><b>Kjønn</b>: <b>en-ord</b>, <b>ei-ord</b>, <b>et-ord</b>. (Mange sier også <i>en bok</i> – her bruker vi skolebøyning.)</li>
-        </ul>
-        <div class="note">Du kan dra med musen, eller klikke på et ord og deretter på en boks.</div>
-      </aside>
-    </div>
-  </section>
-</div>
-
-<script>
-/** ---------- DATA ---------- **/
-const NOUNS = [
-  {base:"stol", gender:"en", forms:{sgInd:"stol", sgDef:"stolen", plInd:"stoler", plDef:"stolene"}, type:"fellesnavn"},
-  {base:"bok", gender:"ei", forms:{sgInd:"bok", sgDef:"boka", plInd:"bøker", plDef:"bøkene"}, type:"fellesnavn"},
-  {base:"hus", gender:"et", forms:{sgInd:"hus", sgDef:"huset", plInd:"hus", plDef:"husene"}, type:"fellesnavn"},
-  {base:"barn", gender:"et", forms:{sgInd:"barn", sgDef:"barnet", plInd:"barn", plDef:"barna"}, type:"fellesnavn"},
-  {base:"katt", gender:"en", forms:{sgInd:"katt", sgDef:"katten", plInd:"katter", plDef:"kattene"}, type:"fellesnavn"},
-  {base:"dør", gender:"ei", forms:{sgInd:"dør", sgDef:"døra", plInd:"dører", plDef:"dørene"}, type:"fellesnavn"},
-  {base:"jente", gender:"ei", forms:{sgInd:"jente", sgDef:"jenta", plInd:"jenter", plDef:"jentene"}, type:"fellesnavn"},
-  {base:"gutt", gender:"en", forms:{sgInd:"gutt", sgDef:"gutten", plInd:"gutter", plDef:"guttene"}, type:"fellesnavn"},
-  {base:"eple", gender:"et", forms:{sgInd:"eple", sgDef:"eplet", plInd:"epler", plDef:"eplene"}, type:"fellesnavn"},
-  {base:"språk", gender:"et", forms:{sgInd:"språk", sgDef:"språket", plInd:"språk", plDef:"språkene"}, type:"fellesnavn"},
-  {base:"venn", gender:"en", forms:{sgInd:"venn", sgDef:"vennen", plInd:"venner", plDef:"vennene"}, type:"fellesnavn"},
-  {base:"nabo", gender:"en", forms:{sgInd:"nabo", sgDef:"naboen", plInd:"naboer", plDef:"naboene"}, type:"fellesnavn"},
-  {base:"familie", gender:"en", forms:{sgInd:"familie", sgDef:"familien", plInd:"familier", plDef:"familiene"}, type:"fellesnavn"},
-  {base:"skole", gender:"en", forms:{sgInd:"skole", sgDef:"skolen", plInd:"skoler", plDef:"skolene"}, type:"fellesnavn"},
-  {base:"lærer", gender:"en", forms:{sgInd:"lærer", sgDef:"læreren", plInd:"lærere", plDef:"lærerne"}, type:"fellesnavn"},
-  {base:"elev", gender:"en", forms:{sgInd:"elev", sgDef:"eleven", plInd:"elever", plDef:"elevene"}, type:"fellesnavn"},
-  {base:"by", gender:"en", forms:{sgInd:"by", sgDef:"byen", plInd:"byer", plDef:"byene"}, type:"fellesnavn"},
-  {base:"mobil", gender:"en", forms:{sgInd:"mobil", sgDef:"mobilen", plInd:"mobiler", plDef:"mobilene"}, type:"fellesnavn"},
-  {base:"klokke", gender:"ei", forms:{sgInd:"klokke", sgDef:"klokka", plInd:"klokker", plDef:"klokkene"}, type:"fellesnavn"},
-  {base:"kopp", gender:"en", forms:{sgInd:"kopp", sgDef:"koppen", plInd:"kopper", plDef:"koppene"}, type:"fellesnavn"},
-];
-
-const PROPER = ["Oslo","Norge","Europa","Gjøvik","Innlandet","Ali","Maria","Ahmed","Sara","Jon","Ikea","Google"];
-
-/** ---------- STATE ---------- **/
-const byId = id => document.getElementById(id);
-const rand = arr => arr[Math.floor(Math.random()*arr.length)];
-const shuffle = arr => arr.sort(()=>Math.random()-0.5);
-
-let state = {
-  mode: "entall-flertall",
-  size: 8,
-  qNum: 0,
-  placed: 0,
-  score: 0,
-  streak: 0,
-  best: Number(localStorage.getItem("nounBest") || 0),
-  currentItems: [], // {id, text, tags:{number,def,gender,type}}
-  selectedTileId: null
-};
-
-/** ---------- HELPERS ---------- **/
-function setMode(val){
-  state.mode = val;
-  const titleMap = {
-    "entall-flertall": "ENTALL / FLERTALL",
-    "ubestemt-bestemt": "UBESTEMT / BESTEMT",
-    "felles-egennavn": "FELLESNAVN / EGENNAVN",
-    "kjonn": "KJØNN: en / ei / et"
-  };
-  byId("modeTitle").textContent = titleMap[val] || "–";
-}
-
-function updateHUD(){
-  byId("qNum").textContent = state.qNum;
-  byId("score").textContent = state.score;
-  byId("streak").textContent = state.streak;
-  byId("best").textContent = state.best;
-  byId("roundInfo").textContent = state.placed + " / " + state.currentItems.length;
-  const pct = state.currentItems.length ? Math.round(100*state.placed/state.currentItems.length) : 0;
-  byId("prog").style.width = pct + "%";
-}
-
-function tokenizeForMode(){
-  const items = [];
-  const size = state.size;
-
-  if(state.mode === "felles-egennavn"){
-    const commons = shuffle([...NOUNS]).slice(0, Math.ceil(size/2));
-    const propers = shuffle([...PROPER]).slice(0, size - commons.length);
-    commons.forEach((n,i)=>{
-      items.push({
-        id: "c"+i, text: n.forms.sgInd, tags:{type:"fellesnavn"}
-      });
-    });
-    propers.forEach((p,i)=>{
-      items.push({
-        id: "p"+i, text: p, tags:{type:"egennavn"}
-      });
-    });
-  }
-  else if(state.mode === "kjonn"){
-    const pick = shuffle([...NOUNS]).slice(0, size);
-    pick.forEach((n,i)=>{
-      items.push({
-        id:"g"+i, text: n.forms.sgInd, tags:{gender:n.gender}
-      });
-    });
-  }
-  else {
-    // entall/flertall, ubestemt/bestemt
-    const forms = [];
-    NOUNS.forEach(n=>{
-      forms.push({text:n.forms.sgInd,  number:"entall", def:"ubestemt"});
-      forms.push({text:n.forms.sgDef,  number:"entall", def:"bestemt"});
-      forms.push({text:n.forms.plInd,  number:"flertall", def:"ubestemt"});
-      forms.push({text:n.forms.plDef,  number:"flertall", def:"bestemt"});
-    });
-    const sample = shuffle(forms).slice(0, size);
-    sample.forEach((f,i)=> items.push({id:"f"+i, text:f.text, tags:{number:f.number, def:f.def}}));
-  }
-
-  return shuffle(items);
-}
-
-function binsForMode(){
-  if(state.mode==="entall-flertall"){
-    return [
-      {key:"entall", title:"ENTALL"},
-      {key:"flertall", title:"FLERTALL"},
-    ];
-  }
-  if(state.mode==="ubestemt-bestemt"){
-    return [
-      {key:"ubestemt", title:"UBESTEMT"},
-      {key:"bestemt", title:"BESTEMT"},
-    ];
-  }
-  if(state.mode==="felles-egennavn"){
-    return [
-      {key:"fellesnavn", title:"FELLESNAVN"},
-      {key:"egennavn", title:"EGENNAVN"},
-    ];
-  }
-  // kjønn
-  return [
-    {key:"en", title:"EN-ORD"},
-    {key:"ei", title:"EI-ORD"},
-    {key:"et", title:"ET-ORD"},
-  ];
-}
-
-function isCorrectForBin(item, binKey){
-  if(state.mode==="entall-flertall"){
-    return item.tags.number === binKey;
-  }
-  if(state.mode==="ubestemt-bestemt"){
-    return item.tags.def === binKey;
-  }
-  if(state.mode==="felles-egennavn"){
-    return item.tags.type === binKey;
-  }
-  if(state.mode==="kjonn"){
-    return item.tags.gender === binKey;
-  }
-  return false;
-}
-
-/** ---------- RENDER ---------- **/
-function renderBoard(){
-  const pool = byId("pool");
-  pool.innerHTML = "";
-  state.currentItems.forEach(it=>{
-    const t = document.createElement("div");
-    t.className = "tile";
-    t.textContent = it.text;
-    t.draggable = !byId("clickOnly").checked;
-    t.dataset.id = it.id;
-    t.addEventListener("dragstart", onDragStart);
-    t.addEventListener("click", onTileClick);
-    pool.appendChild(t);
-  });
-
-  const binsEl = byId("bins");
-  const bins = binsForMode();
-  binsEl.className = "bins" + (bins.length===3? " three": "");
-  binsEl.innerHTML = "";
-  bins.forEach(b=>{
-    const bin = document.createElement("div");
-    bin.className = "bin";
-    bin.dataset.key = b.key;
-    const header = document.createElement("div");
-    header.className = "binHeader";
-    const title = document.createElement("div");
-    title.className = "binTitle";
-    title.textContent = b.title;
-    const count = document.createElement("div");
-    count.className = "binCount";
-    count.textContent = "0";
-    header.appendChild(title); header.appendChild(count);
-    const slot = document.createElement("div");
-    slot.className = "slot";
-    bin.appendChild(header); bin.appendChild(slot);
-
-    // DnD
-    bin.addEventListener("dragover", e=>{e.preventDefault(); bin.classList.add("dropTarget");});
-    bin.addEventListener("dragleave", ()=>bin.classList.remove("dropTarget"));
-    bin.addEventListener("drop", e=>{
-      e.preventDefault(); bin.classList.remove("dropTarget");
-      const id = e.dataTransfer.getData("text/plain");
-      placeTileInBin(id, b.key, bin);
-    });
-    // Klikk-tilordning
-    bin.addEventListener("click", ()=>{
-      const id = state.selectedTileId;
-      if(id) placeTileInBin(id, b.key, bin);
-    });
-
-    binsEl.appendChild(bin);
-  });
-
-  byId("feedback").style.display="none";
-  byId("feedback").className="feedback";
-  byId("nextBtn").disabled = true;
-}
-
-function onDragStart(e){
-  e.dataTransfer.setData("text/plain", e.currentTarget.dataset.id);
-}
-function onTileClick(e){
-  const was = state.selectedTileId;
-  const id = e.currentTarget.dataset.id;
-  // reset all
-  Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
-  if(was===id){ state.selectedTileId=null; return; }
-  state.selectedTileId = id;
-  e.currentTarget.classList.add("selected");
-}
-
-function placeTileInBin(id, binKey, binEl){
-  const item = state.currentItems.find(x=>x.id===id);
-  if(!item) return;
-  // find tile element
-  const tile = document.querySelector(`.tile[data-id="${id}"]`);
-  if(!tile) return;
-
-  // evaluate
-  const ok = isCorrectForBin(item, binKey);
-  tile.classList.remove("selected");
-  if(ok){
-    tile.classList.add("correct");
-    tile.draggable = false;
-    state.placed += 1;
-    state.score += 10;
-    state.streak += 1;
-    // move into bin slot
-    const slot = binEl.querySelector(".slot");
-    slot.appendChild(tile);
-    // update count
-    const countEl = binEl.querySelector(".binCount");
-    countEl.textContent = String((slot.querySelectorAll(".tile").length)||0);
-  }else{
-    tile.classList.add("wrong");
-    state.streak = 0;
-    setTimeout(()=>tile.classList.remove("wrong"), 550);
-  }
-  state.selectedTileId = null;
-  updateHUD();
-
-  if(state.placed === state.currentItems.length){
-    roundComplete();
-  }
-}
-
-function roundComplete(){
-  const fb = byId("feedback");
-  fb.style.display="block"; fb.className="feedback good";
-  fb.innerHTML = `🎉 Flott! Du sorterte alle ordene.<br>Poeng denne runden: <b>${state.currentItems.length*10}</b>`;
-  fireConfetti();
-  if(state.score > state.best){
-    state.best = state.score;
-    localStorage.setItem("nounBest", String(state.best));
-  }
-  byId("nextBtn").disabled = false;
-  updateHUD();
-}
-
-/** ---------- GAME FLOW ---------- **/
-function startRound(){
-  state.qNum += 1;
-  state.placed = 0;
-  state.currentItems = tokenizeForMode();
-  renderBoard();
-  updateHUD();
-}
-
-function startGame(){
-  state.score = 0; state.streak=0; state.qNum=0;
-  startRound();
-}
-
-/** ---------- CONFETTI ---------- **/
-const confettiCanvas = document.getElementById("confetti");
-const ctx = confettiCanvas.getContext("2d");
-let confettiPieces = [];
-function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
-window.addEventListener("resize", resizeCanvas); resizeCanvas();
-function fireConfetti(){
-  for(let i=0;i<90;i++){
-    confettiPieces.push({
-      x: confettiCanvas.width/2, y: confettiCanvas.height/3,
-      vx: (Math.random()*4-2)*(1+Math.random()*1.5),
-      vy: (Math.random()*-3-2), g: 0.09+Math.random()*0.04,
-      s: 4+Math.random()*6, c: (Math.random()<.33?"#7c5cff":(Math.random()<.5?"#00e0a4":"#ffd166")),
-      a:1, r:Math.random()*Math.PI
-    });
-  }
-}
-(function loop(){
-  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  confettiPieces.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=0.1; p.a-=0.008; });
-  confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
-  confettiPieces.forEach(p=>{
-    ctx.globalAlpha=Math.max(0,p.a); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
-    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
-  });
-  requestAnimationFrame(loop);
-})();
-
-/** ---------- EVENTS ---------- **/
-document.addEventListener("DOMContentLoaded", ()=>{
-  // Modus-klikk
-  Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
-    label.addEventListener("click", ()=>{
-      Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
-      label.classList.add("active");
-      const val = label.querySelector("input").value;
-      setMode(val);
-    });
-  });
-
-  // Vanskelighet
-  byId("easy").addEventListener("click", ()=>{
-    byId("easy").classList.add("active"); byId("hard").classList.remove("active");
-    state.size = 8;
-  });
-  byId("hard").addEventListener("click", ()=>{
-    byId("hard").classList.add("active"); byId("easy").classList.remove("active");
-    state.size = 12;
-  });
-
-  byId("startBtn").addEventListener("click", startGame);
-  byId("nextBtn").addEventListener("click", startRound);
-  byId("resetBtn").addEventListener("click", ()=>{ localStorage.removeItem("nounBest"); state.best=0; updateHUD(); });
-
-  byId("shuffleBtn").addEventListener("click", ()=>{
-    // bland bare i pool for ikke-plasserte
-    const pool = byId("pool");
-    const tiles = Array.from(pool.querySelectorAll(".tile"));
-    // Fisher-Yates:
-    for(let i=tiles.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      pool.insertBefore(tiles[j], tiles[i]);
-      const tmp = tiles[i]; tiles[i] = tiles[j]; tiles[j] = tmp;
-    }
-  });
-
-  byId("hintBtn").addEventListener("click", ()=>{
-    const fb = byId("feedback");
-    fb.style.display="block"; fb.className="feedback";
-    fb.innerHTML = `🔎 <b>Hint:</b> 
-      <ul style="margin:6px 0 0 18px">
-        <li><b>Entall</b>: én/ett. <b>Flertall</b>: flere.</li>
-        <li><b>Ubestemt</b>: en/ei/et + ordet (eller flertall uten -ene). <b>Bestemt</b>: endelse som <i>-en/-a/-et/-ene</i>.</li>
-        <li><b>Egennavn</b> skrives med stor forbokstav (Oslo, Norge, Ahmed).</li>
-        <li><b>Kjønn</b>: en‑, ei‑, et‑ord (her bruker vi skolebøyning – noen sier også «en bok»).</li>
-      </ul>`;
-  });
-
-  setMode(state.mode);
-  updateHUD();
-});
-</script>
-</body>
-</html>
