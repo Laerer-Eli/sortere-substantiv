@@ -169,3 +169,579 @@
         <h3>Statistikk</h3>
         <div class="row" style="gap:10px">
           <div class="pill"><div class="muted">Oppgave</div><div class="big" id="qNum">0</div></div>
+          <div class="pill"><div class="muted">Poeng</div><div class="big" id="score">0</div></div>
+          <div class="pill"><div class="muted">Streak</div><div class="big" id="streak">0</div></div>
+          <div class="pill"><div class="muted">Beste</div><div class="big" id="best">0</div></div>
+        </div>
+        <div class="statusbar" style="margin-top:10px">
+          <div class="progress" aria-hidden="true"><span id="prog"></span></div>
+        </div>
+        <div class="note">Tips: Klikk «Hint» under for regler og eksempler.</div>
+      </div>
+    </div>
+
+    <div class="game">
+      <div class="card">
+        <div class="statusbar">
+          <div><span class="muted">Modus</span> <strong id="modeTitle">–</strong></div>
+          <div><span class="muted">Runde</span> <strong id="roundInfo">–</strong></div>
+        </div>
+
+        <div class="board">
+          <div class="pool" id="pool" aria-label="Ord som skal sorteres"></div>
+          <div id="bins" class="bins"></div>
+        </div>
+
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+
+        <div class="footer">
+          <div class="row">
+            <button class="btn ghost" id="hintBtn">💡 Hint</button>
+            <button class="btn ghost" id="shuffleBtn">🔄 Bland ord</button>
+          </div>
+          <div class="row">
+            <button class="btn" id="nextBtn" disabled>Neste runde ➜</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="card hint">
+        <strong>Regler i korte trekk</strong>
+        <ul style="margin-top:8px">
+          <li><b>Entall</b> = én / ett. <b>Flertall</b> = flere.</li>
+          <li><b>Ubestemt</b>: ny informasjon (f.eks. <i>en stol, stoler</i>). <b>Bestemt</b>: noe kjent (f.eks. <i>stolen, stolene</i>).</li>
+          <li><b>Fellesnavn</b> (vanlige ting/ord) vs. <b>Egennavn</b> (navn på personer, steder, merker).</li>
+          <li><b>Kjønn</b>: <b>en-ord</b>, <b>ei-ord</b>, <b>et-ord</b>. (Mange sier også <i>en bok</i> – her bruker vi skolebøyning.)</li>
+        </ul>
+        <div class="note">Du kan dra med musen, eller klikke på et ord og deretter på en boks.</div>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<!-- Modal for egne ord -->
+<div class="modalBackdrop" id="modal">
+  <div class="modal">
+    <h3>Legg til eget substantiv</h3>
+    <div class="grid3">
+      <div class="field"><label>Base (infinitivform)</label><input id="mBase" placeholder="f.eks. stol"></div>
+      <div class="field"><label>Kjønn</label>
+        <select id="mGender">
+          <option value="en">en</option>
+          <option value="ei">ei</option>
+          <option value="et">et</option>
+        </select>
+      </div>
+      <div class="field"><label>Type</label>
+        <select id="mType">
+          <option value="fellesnavn" selected>Fellesnavn</option>
+          <option value="egennavn">Egennavn</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:8px">
+      <div class="field"><label>Entall ubestemt</label><input id="mSgInd" placeholder="stol"></div>
+      <div class="field"><label>Entall bestemt</label><input id="mSgDef" placeholder="stolen"></div>
+      <div class="field"><label>Flertall ubestemt</label><input id="mPlInd" placeholder="stoler"></div>
+      <div class="field"><label>Flertall bestemt</label><input id="mPlDef" placeholder="stolene"></div>
+    </div>
+
+    <div class="field" style="margin-top:8px">
+      <label>Tema (velg én eller flere)</label>
+      <div class="tagbar" id="mThemes">
+        <div class="tag" data-v="skole">Skole</div>
+        <div class="tag" data-v="butikk">Butikk</div>
+        <div class="tag" data-v="helse">Helse</div>
+        <div class="tag" data-v="fritid">Fritid</div>
+        <div class="tag" data-v="hjem">Hjem</div>
+        <div class="tag" data-v="teknologi">Teknologi</div>
+        <div class="tag" data-v="familie">Familie</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;justify-content:flex-end">
+      <button class="btn ghost" id="mCancel">Avbryt</button>
+      <button class="btn" id="mSave">Lagre ➕</button>
+    </div>
+    <div class="note" style="margin-top:8px">Tips: Feltene fylles automatisk når du skriver «Base» + «Kjønn», men kan endres.</div>
+  </div>
+</div>
+
+<script>
+/** ---------- DATA ---------- **/
+const NOUNS = [
+  {base:"stol", gender:"en", forms:{sgInd:"stol", sgDef:"stolen", plInd:"stoler", plDef:"stolene"}, type:"fellesnavn", themes:["hjem","skole","butikk"]},
+  {base:"bok", gender:"ei", forms:{sgInd:"bok", sgDef:"boka", plInd:"bøker", plDef:"bøkene"}, type:"fellesnavn", themes:["skole","fritid"]},
+  {base:"hus", gender:"et", forms:{sgInd:"hus", sgDef:"huset", plInd:"hus", plDef:"husene"}, type:"fellesnavn", themes:["hjem"]},
+  {base:"barn", gender:"et", forms:{sgInd:"barn", sgDef:"barnet", plInd:"barn", plDef:"barna"}, type:"fellesnavn", themes:["familie","fritid"]},
+  {base:"katt", gender:"en", forms:{sgInd:"katt", sgDef:"katten", plInd:"katter", plDef:"kattene"}, type:"fellesnavn", themes:["hjem","fritid"]},
+  {base:"dør", gender:"ei", forms:{sgInd:"dør", sgDef:"døra", plInd:"dører", plDef:"dørene"}, type:"fellesnavn", themes:["hjem","skole"]},
+  {base:"jente", gender:"ei", forms:{sgInd:"jente", sgDef:"jenta", plInd:"jenter", plDef:"jentene"}, type:"fellesnavn", themes:["skole","fritid"]},
+  {base:"gutt", gender:"en", forms:{sgInd:"gutt", sgDef:"gutten", plInd:"gutter", plDef:"guttene"}, type:"fellesnavn", themes:["skole","fritid"]},
+  {base:"eple", gender:"et", forms:{sgInd:"eple", sgDef:"eplet", plInd:"epler", plDef:"eplene"}, type:"fellesnavn", themes:["helse","butikk","hjem"]},
+  {base:"språk", gender:"et", forms:{sgInd:"språk", sgDef:"språket", plInd:"språk", plDef:"språkene"}, type:"fellesnavn", themes:["skole"]},
+  {base:"venn", gender:"en", forms:{sgInd:"venn", sgDef:"vennen", plInd:"venner", plDef:"vennene"}, type:"fellesnavn", themes:["fritid","skole"]},
+  {base:"nabo", gender:"en", forms:{sgInd:"nabo", sgDef:"naboen", plInd:"naboer", plDef:"naboene"}, type:"fellesnavn", themes:["hjem"]},
+  {base:"familie", gender:"en", forms:{sgInd:"familie", sgDef:"familien", plInd:"familier", plDef:"familiene"}, type:"fellesnavn", themes:["familie"]},
+  {base:"skole", gender:"en", forms:{sgInd:"skole", sgDef:"skolen", plInd:"skoler", plDef:"skolene"}, type:"fellesnavn", themes:["skole"]},
+  {base:"lærer", gender:"en", forms:{sgInd:"lærer", sgDef:"læreren", plInd:"lærere", plDef:"lærerne"}, type:"fellesnavn", themes:["skole"]},
+  {base:"elev", gender:"en", forms:{sgInd:"elev", sgDef:"eleven", plInd:"elever", plDef:"elevene"}, type:"fellesnavn", themes:["skole"]},
+  {base:"by", gender:"en", forms:{sgInd:"by", sgDef:"byen", plInd:"byer", plDef:"byene"}, type:"fellesnavn", themes:["fritid"]},
+  {base:"mobil", gender:"en", forms:{sgInd:"mobil", sgDef:"mobilen", plInd:"mobiler", plDef:"mobilene"}, type:"fellesnavn", themes:["teknologi","fritid","skole"]},
+  {base:"klokke", gender:"ei", forms:{sgInd:"klokke", sgDef:"klokka", plInd:"klokker", plDef:"klokkene"}, type:"fellesnavn", themes:["hjem","fritid"]},
+  {base:"kopp", gender:"en", forms:{sgInd:"kopp", sgDef:"koppen", plInd:"kopper", plDef:"koppene"}, type:"fellesnavn", themes:["hjem","skole"]},
+  {base:"butikk", gender:"en", forms:{sgInd:"butikk", sgDef:"butikken", plInd:"butikker", plDef:"butikkene"}, type:"fellesnavn", themes:["butikk"]},
+  {base:"kunde", gender:"en", forms:{sgInd:"kunde", sgDef:"kunden", plInd:"kunder", plDef:"kundene"}, type:"fellesnavn", themes:["butikk"]},
+  {base:"lege", gender:"en", forms:{sgInd:"lege", sgDef:"legen", plInd:"leger", plDef:"legene"}, type:"fellesnavn", themes:["helse"]},
+  {base:"sykehus", gender:"et", forms:{sgInd:"sykehus", sgDef:"sykehuset", plInd:"sykehus", plDef:"sykehusene"}, type:"fellesnavn", themes:["helse"]},
+  {base:"medisin", gender:"en", forms:{sgInd:"medisin", sgDef:"medisinen", plInd:"medisiner", plDef:"medisinene"}, type:"fellesnavn", themes:["helse","butikk"]},
+  {base:"ost", gender:"en", forms:{sgInd:"ost", sgDef:"osten", plInd:"oster", plDef:"ostene"}, type:"fellesnavn", themes:["butikk","hjem"]},
+  {base:"brød", gender:"et", forms:{sgInd:"brød", sgDef:"brødet", plInd:"brød", plDef:"brødene"}, type:"fellesnavn", themes:["butikk","hjem"]},
+  {base:"apotek", gender:"et", forms:{sgInd:"apotek", sgDef:"apoteket", plInd:"apotek", plDef:"apotekene"}, type:"fellesnavn", themes:["helse","butikk"]},
+];
+
+const PROPER_BY_THEME = {
+  skole: ["NTNU","OsloMet","Høgskolen","Kuben"],
+  butikk: ["IKEA","Rema 1000","Kiwi"],
+  helse: ["Ahus","Sykehuset Innlandet"],
+  fritid: ["Gjøvik","Oslo","Norge","Toten"],
+  hjem: ["Gjøvik","Norge"],
+  teknologi: ["Google","Apple","Microsoft"],
+  familie: ["Ali","Ahmed","Sara","Maria","Jon","Eli"]
+};
+
+/** ---------- STATE ---------- **/
+const byId = id => document.getElementById(id);
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+const shuffle = arr => arr.sort(()=>Math.random()-0.5);
+
+let state = {
+  mode: "entall-flertall",
+  size: 8,
+  qNum: 0,
+  placed: 0,
+  score: 0,
+  streak: 0,
+  best: Number(localStorage.getItem("nounBest") || 0),
+  selectedThemes: ["skole","butikk","helse","fritid","hjem","teknologi","familie"],
+  currentItems: [], // {id, text, tags:{number,def,gender,type}}
+  selectedTileId: null
+};
+
+/** ---------- HELPERS ---------- **/
+function setMode(val){
+  state.mode = val;
+  const titleMap = {
+    "entall-flertall": "ENTALL / FLERTALL",
+    "ubestemt-bestemt": "UBESTEMT / BESTEMT",
+    "felles-egennavn": "FELLESNAVN / EGENNAVN",
+    "kjonn": "KJØNN: en / ei / et",
+    "fire-bokser": "4‑BOKSER (entall/ub, entall/b, flertall/ub, flertall/b)"
+  };
+  byId("modeTitle").textContent = titleMap[val] || "–";
+}
+
+function updateHUD(){
+  byId("qNum").textContent = state.qNum;
+  byId("score").textContent = state.score;
+  byId("streak").textContent = state.streak;
+  byId("best").textContent = state.best;
+  byId("roundInfo").textContent = state.placed + " / " + state.currentItems.length;
+  const pct = state.currentItems.length ? Math.round(100*state.placed/state.currentItems.length) : 0;
+  byId("prog").style.width = pct + "%";
+}
+
+function nounsByThemes(){
+  const sel = state.selectedThemes;
+  const list = NOUNS.filter(n => n.themes.some(t => sel.includes(t)));
+  return list.length ? list : NOUNS; // fallback hvis tomt
+}
+
+function properByThemes(count){
+  const sel = state.selectedThemes;
+  let pool = [];
+  sel.forEach(t => pool = pool.concat(PROPER_BY_THEME[t] || []));
+  if(pool.length===0) pool = ["Oslo","Norge","Ali","Sara"];
+  pool = Array.from(new Set(pool));
+  return shuffle(pool).slice(0, count);
+}
+
+function tokenizeForMode(){
+  const items = [];
+  const size = state.size;
+
+  if(state.mode === "felles-egennavn"){
+    const commons = shuffle([...nounsByThemes()]).slice(0, Math.ceil(size/2));
+    const propers = properByThemes(size - commons.length);
+    commons.forEach((n,i)=>{
+      items.push({ id: "c"+i, text: n.forms.sgInd, tags:{type:"fellesnavn"} });
+    });
+    propers.forEach((p,i)=>{
+      items.push({ id: "p"+i, text: p, tags:{type:"egennavn"} });
+    });
+  }
+  else if(state.mode === "kjonn"){
+    const pick = shuffle([...nounsByThemes()]).slice(0, size);
+    pick.forEach((n,i)=>{
+      items.push({ id:"g"+i, text: n.forms.sgInd, tags:{gender:n.gender} });
+    });
+  }
+  else {
+    // entall/flertall, ubestemt/bestemt og 4-bokser bruker bøyningsformer
+    const forms = [];
+    nounsByThemes().forEach(n=>{
+      forms.push({text:n.forms.sgInd,  number:"entall", def:"ubestemt"});
+      forms.push({text:n.forms.sgDef,  number:"entall", def:"bestemt"});
+      forms.push({text:n.forms.plInd,  number:"flertall", def:"ubestemt"});
+      forms.push({text:n.forms.plDef,  number:"flertall", def:"bestemt"});
+    });
+    const sample = shuffle(forms).slice(0, size);
+    sample.forEach((f,i)=> items.push({id:"f"+i, text:f.text, tags:{number:f.number, def:f.def}}));
+  }
+
+  return shuffle(items);
+}
+
+function binsForMode(){
+  if(state.mode==="entall-flertall"){
+    return [
+      {key:"entall", title:"ENTALL"},
+      {key:"flertall", title:"FLERTALL"},
+    ];
+  }
+  if(state.mode==="ubestemt-bestemt"){
+    return [
+      {key:"ubestemt", title:"UBESTEMT"},
+      {key:"bestemt", title:"BESTEMT"},
+    ];
+  }
+  if(state.mode==="felles-egennavn"){
+    return [
+      {key:"fellesnavn", title:"FELLESNAVN"},
+      {key:"egennavn", title:"EGENNAVN"},
+    ];
+  }
+  if(state.mode==="kjonn"){
+    return [
+      {key:"en", title:"EN-ORD"},
+      {key:"ei", title:"EI-ORD"},
+      {key:"et", title:"ET-ORD"},
+    ];
+  }
+  // fire-bokser
+  return [
+    {key:"entall-ubestemt",  title:"ENTALL • UBESTEMT"},
+    {key:"entall-bestemt",   title:"ENTALL • BESTEMT"},
+    {key:"flertall-ubestemt",title:"FLERTALL • UBESTEMT"},
+    {key:"flertall-bestemt", title:"FLERTALL • BESTEMT"},
+  ];
+}
+
+function isCorrectForBin(item, binKey){
+  if(state.mode==="entall-flertall"){
+    return item.tags.number === binKey;
+  }
+  if(state.mode==="ubestemt-bestemt"){
+    return item.tags.def === binKey;
+  }
+  if(state.mode==="felles-egennavn"){
+    return item.tags.type === binKey;
+  }
+  if(state.mode==="kjonn"){
+    return item.tags.gender === binKey;
+  }
+  if(state.mode==="fire-bokser"){
+    const mk = (item.tags.number || "") + "-" + (item.tags.def || "");
+    return mk === binKey;
+  }
+  return false;
+}
+
+/** ---------- RENDER ---------- **/
+function renderBoard(){
+  const pool = byId("pool");
+  pool.innerHTML = "";
+  state.currentItems.forEach(it=>{
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = it.text;
+    t.draggable = !byId("clickOnly").checked;
+    t.dataset.id = it.id;
+    t.addEventListener("dragstart", onDragStart);
+    t.addEventListener("click", onTileClick);
+    pool.appendChild(t);
+  });
+
+  const binsEl = byId("bins");
+  const bins = binsForMode();
+  binsEl.className = "bins" + (bins.length===3? " three": bins.length===4? " four" : "");
+  binsEl.innerHTML = "";
+  bins.forEach(b=>{
+    const bin = document.createElement("div");
+    bin.className = "bin";
+    bin.dataset.key = b.key;
+    const header = document.createElement("div");
+    header.className = "binHeader";
+    const title = document.createElement("div");
+    title.className = "binTitle";
+    title.textContent = b.title;
+    const count = document.createElement("div");
+    count.className = "binCount";
+    count.textContent = "0";
+    header.appendChild(title); header.appendChild(count);
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    bin.appendChild(header); bin.appendChild(slot);
+
+    // DnD
+    bin.addEventListener("dragover", e=>{e.preventDefault(); bin.classList.add("dropTarget");});
+    bin.addEventListener("dragleave", ()=>bin.classList.remove("dropTarget"));
+    bin.addEventListener("drop", e=>{
+      e.preventDefault(); bin.classList.remove("dropTarget");
+      const id = e.dataTransfer.getData("text/plain");
+      placeTileInBin(id, b.key, bin);
+    });
+    // Klikk-tilordning
+    bin.addEventListener("click", ()=>{
+      const id = state.selectedTileId;
+      if(id) placeTileInBin(id, b.key, bin);
+    });
+
+    binsEl.appendChild(bin);
+  });
+
+  byId("feedback").style.display="none";
+  byId("feedback").className="feedback";
+  byId("nextBtn").disabled = true;
+}
+
+function onDragStart(e){
+  e.dataTransfer.setData("text/plain", e.currentTarget.dataset.id);
+}
+function onTileClick(e){
+  const was = state.selectedTileId;
+  const id = e.currentTarget.dataset.id;
+  // reset all
+  Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
+  if(was===id){ state.selectedTileId=null; return; }
+  state.selectedTileId = id;
+  e.currentTarget.classList.add("selected");
+}
+
+function placeTileInBin(id, binKey, binEl){
+  const item = state.currentItems.find(x=>x.id===id);
+  if(!item) return;
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  if(!tile) return;
+
+  const ok = isCorrectForBin(item, binKey);
+  tile.classList.remove("selected");
+  if(ok){
+    tile.classList.add("correct");
+    tile.draggable = false;
+    state.placed += 1;
+    state.score += 10;
+    state.streak += 1;
+    const slot = binEl.querySelector(".slot");
+    slot.appendChild(tile);
+    const countEl = binEl.querySelector(".binCount");
+    countEl.textContent = String((slot.querySelectorAll(".tile").length)||0);
+  }else{
+    tile.classList.add("wrong");
+    state.streak = 0;
+    setTimeout(()=>tile.classList.remove("wrong"), 550);
+  }
+  state.selectedTileId = null;
+  updateHUD();
+
+  if(state.placed === state.currentItems.length){
+    roundComplete();
+  }
+}
+
+function roundComplete(){
+  const fb = byId("feedback");
+  fb.style.display="block"; fb.className="feedback good";
+  fb.innerHTML = `🎉 Flott! Du sorterte alle ordene.<br>Poeng denne runden: <b>${state.currentItems.length*10}</b>`;
+  fireConfetti();
+  if(state.score > state.best){
+    state.best = state.score;
+    localStorage.setItem("nounBest", String(state.best));
+  }
+  byId("nextBtn").disabled = false;
+  updateHUD();
+}
+
+/** ---------- GAME FLOW ---------- **/
+function startRound(){
+  state.qNum += 1;
+  state.placed = 0;
+  state.currentItems = tokenizeForMode();
+  renderBoard();
+  updateHUD();
+}
+
+function startGame(){
+  state.score = 0; state.streak=0; state.qNum=0;
+  startRound();
+}
+
+/** ---------- CONFETTI ---------- **/
+const confettiCanvas = document.getElementById("confetti");
+const ctx = confettiCanvas.getContext("2d");
+let confettiPieces = [];
+function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+window.addEventListener("resize", resizeCanvas); resizeCanvas();
+function fireConfetti(){
+  for(let i=0;i<90;i++){
+    confettiPieces.push({
+      x: confettiCanvas.width/2, y: confettiCanvas.height/3,
+      vx: (Math.random()*4-2)*(1+Math.random()*1.5),
+      vy: (Math.random()*-3-2), g: 0.09+Math.random()*0.04,
+      s: 4+Math.random()*6, c: (Math.random()<.33?"#7c5cff":(Math.random()<.5?"#00e0a4":"#ffd166")),
+      a:1, r:Math.random()*Math.PI
+    });
+  }
+}
+(function loop(){
+  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confettiPieces.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=0.1; p.a-=0.008; });
+  confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
+  confettiPieces.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,p.a); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
+  });
+  requestAnimationFrame(loop);
+})();
+
+/** ---------- MODAL: EGNE ORD ---------- **/
+function openModal(){ byId("modal").style.display="grid"; }
+function closeModal(){ byId("modal").style.display="none"; }
+function suggestForms(){
+  const base = byId("mBase").value.trim();
+  const gender = byId("mGender").value;
+  if(!base) return;
+  // enkle forslag (kan redigeres)
+  const sgInd = base;
+  const sgDef = (gender==="en"? base+"en" : gender==="ei"? base+"a" : base+"et");
+  // naive flertallsforslag (kan være feil for uregelmessige): -er / -ene for de fleste
+  let plInd = base + "er";
+  let plDef = base + "ene";
+  // noen kjente unntak
+  const invariants = ["hus","barn","apotek","språk","brød"];
+  if(invariants.includes(base)){ plInd = base; plDef = (base==="brød")? "brødene" : base+"ene"; }
+  // fyll feltene, men la lærer justere manuelt
+  byId("mSgInd").value = sgInd;
+  byId("mSgDef").value = sgDef;
+  byId("mPlInd").value = plInd;
+  byId("mPlDef").value = plDef;
+}
+function collectThemesFromModal(){
+  return Array.from(byId("mThemes").querySelectorAll(".tag.active")).map(el=>el.dataset.v);
+}
+function saveWordFromModal(){
+  const base = byId("mBase").value.trim();
+  const gender = byId("mGender").value;
+  const type = byId("mType").value;
+  const sgInd = byId("mSgInd").value.trim();
+  const sgDef = byId("mSgDef").value.trim();
+  const plInd = byId("mPlInd").value.trim();
+  const plDef = byId("mPlDef").value.trim();
+  const themes = collectThemesFromModal();
+  if(!base || !gender || !sgInd || !sgDef || !plInd || !plDef){
+    alert("Fyll inn alle former (entall/flertall, ubestemt/bestemt)."); return;
+  }
+  // Hvis egennavn: lag som eget element i PROPER_BY_THEME
+  if(type==="egennavn"){
+    themes.forEach(t=>{
+      PROPER_BY_THEME[t] = (PROPER_BY_THEME[t]||[]);
+      PROPER_BY_THEME[t].push(base.charAt(0).toUpperCase() + base.slice(1));
+      PROPER_BY_THEME[t] = Array.from(new Set(PROPER_BY_THEME[t])); // unik
+    });
+  } else {
+    // Fellesnavn
+    NOUNS.push({
+      base, gender,
+      forms:{sgInd, sgDef, plInd, plDef},
+      type:"fellesnavn",
+      themes: themes.length? themes : ["fritid"]
+    });
+  }
+  closeModal();
+  alert("Lagt til! Du kan starte en ny runde for å se ordet.");
+}
+
+/** ---------- EVENTS ---------- **/
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Modus-klikk
+  Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
+    label.addEventListener("click", ()=>{
+      Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
+      label.classList.add("active");
+      const val = label.querySelector("input").value;
+      setMode(val);
+    });
+  });
+
+  // Tema
+  Array.from(document.querySelectorAll("#themeRow .chip")).forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      const cb = chip.querySelector("input");
+      cb.checked = !cb.checked;
+      chip.classList.toggle("active", cb.checked);
+      const sel = Array.from(document.querySelectorAll("#themeRow input:checked")).map(i=>i.value);
+      state.selectedThemes = sel.length? sel : ["skole"]; // minst ett
+    });
+  });
+
+  // Vanskelighet
+  byId("easy").addEventListener("click", ()=>{
+    byId("easy").classList.add("active"); byId("hard").classList.remove("active");
+    state.size = 8;
+  });
+  byId("hard").addEventListener("click", ()=>{
+    byId("hard").classList.add("active"); byId("easy").classList.remove("active");
+    state.size = 12;
+  });
+
+  // Start/Next/Reset/Shuffle/Hint
+  byId("startBtn").addEventListener("click", startGame);
+  byId("nextBtn").addEventListener("click", startRound);
+  byId("resetBtn").addEventListener("click", ()=>{ localStorage.removeItem("nounBest"); state.best=0; updateHUD(); });
+  byId("shuffleBtn").addEventListener("click", ()=>{
+    const pool = byId("pool");
+    const tiles = Array.from(pool.querySelectorAll(".tile"));
+    for(let i=tiles.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      pool.insertBefore(tiles[j], tiles[i]);
+      const tmp = tiles[i]; tiles[i] = tiles[j]; tiles[j] = tmp;
+    }
+  });
+  byId("hintBtn").addEventListener("click", ()=>{
+    const fb = byId("feedback");
+    fb.style.display="block"; fb.className="feedback";
+    fb.innerHTML = `🔎 <b>Hint:</b> 
+      <ul style="margin:6px 0 0 18px">
+        <li><b>Entall</b>: én/ett. <b>Flertall</b>: flere.</li>
+        <li><b>Ubestemt</b>: en/ei/et + ordet (eller flertall uten -ene). <b>Bestemt</b>: endelse som <i>-en/-a/-et/-ene</i>.</li>
+        <li><b>Egennavn</b> skrives med stor forbokstav (Oslo, Norge, Ahmed).</li>
+        <li><b>Kjønn</b>: en‑, ei‑, et‑ord (her bruker vi skolebøyning – noen sier også «en bok»).</li>
+      </ul>`;
+  });
+
+  // Modal
+  byId("addWordBtn").addEventListener("click", openModal);
+  byId("mCancel").addEventListener("click", closeModal);
+  byId("mSave").addEventListener("click", saveWordFromModal);
+  byId("mBase").addEventListener("input", suggestForms);
+  byId("mGender").addEventListener("change", suggestForms);
+  Array.from(byId("mThemes").querySelectorAll(".tag")).forEach(tag=>{
+    tag.addEventListener("click", ()=> tag.classList.toggle("active"));
+  });
+
+  setMode(state.mode);
+  updateHUD();
+});
+</script>
+</body>
+</html>
