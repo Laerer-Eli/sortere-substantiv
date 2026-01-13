@@ -4,155 +4,93 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>VerbSpill – presens, preteritum, perfektum</title>
+<title>SubstantivSpill – sorter substantiv</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <style>
   :root{
     --bg1:#0f1020; --bg2:#1a0933; --ink:#f7f7fb; --muted:#c7c7d7;
-    --accent:#7c5cff; --accent2:#00e0a4; --bad:#ff5c7a;
-    --card:#141429; --shadow:0 10px 30px rgba(0,0,0,.35);
+    --accent:#7c5cff; --accent2:#00e0a4; --bad:#ff5c7a; --warn:#ffd166;
+    --card:#141429; --glass:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.35);
     --radius:18px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; font-family:system-ui,-apple-system,Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--ink);
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink);
     background:
       radial-gradient(1200px 800px at 20% 10%, #2a1768 0, transparent 60%),
       radial-gradient(1200px 800px at 80% 90%, #0f805a 0, transparent 60%),
       linear-gradient(120deg,var(--bg1),var(--bg2));
     overflow-x:hidden;
   }
-
-  /* Pynt */
-  .blob{position:fixed; inset:auto; pointer-events:none; filter:blur(30px); opacity:.5; z-index:0}
-  .blob.b1{width:240px; height:240px; background:#7c5cff; top:10%; left:5%; border-radius:50% 40% 60% 50%}
-  .blob.b2{width:280px; height:280px; background:#00e0a4; bottom:8%; right:6%; border-radius:50% 60% 45% 55%}
-  @keyframes floaty { 0% { transform:translateY(0) rotate(0deg) } 50% { transform:translateY(-12px) rotate(2deg) } 100%{ transform:translateY(0) rotate(0deg) } }
+  .blob{position:fixed; pointer-events:none; filter:blur(30px); opacity:.5; z-index:0}
+  .b1{width:240px;height:240px;background:#7c5cff;top:10%;left:5%;border-radius:50% 40% 60% 50%}
+  .b2{width:280px;height:280px;background:#00e0a4;bottom:8%;right:6%;border-radius:50% 60% 45% 55%}
+  @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-12px)}100%{transform:translateY(0)}}
   .blob{animation:floaty 7s ease-in-out infinite}
 
-  .wrap{ position:relative; z-index:1; max-width:980px; margin:0 auto; padding:32px 18px 48px;}
-  header{ display:flex; align-items:center; gap:14px; margin-bottom:18px;}
-  .logo{ width:46px; height:46px; border-radius:12px; background:linear-gradient(135deg,#7c5cff, #00e0a4);
-         display:grid; place-items:center; box-shadow:var(--shadow); }
-  .logo svg{width:28px; height:28px; fill:white}
-  h1{font-size:clamp(22px,3.2vw,34px); margin:0; letter-spacing:.2px}
-  .subtitle{color:var(--muted); margin-top:4px; font-size:14px}
+  .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 16px 48px}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#7c5cff,#00e0a4);display:grid;place-items:center;box-shadow:var(--shadow)}
+  .logo svg{width:28px;height:28px;fill:white}
+  h1{margin:0;font-size:clamp(22px,3.2vw,34px)}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:4px}
 
-  .panel{
-    background:linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
-    border:1px solid rgba(255,255,255,0.12);
-    box-shadow:var(--shadow);
-    border-radius:var(--radius); padding:18px;
-  }
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));
+         border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow); border-radius:var(--radius); padding:16px}
 
-  .controls{
-    display:grid; grid-template-columns:1.1fr 1fr; gap:14px; align-items:start; margin-bottom:16px;
-  }
-  @media (max-width:800px){ .controls{grid-template-columns:1fr} }
-  .card{background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:14px}
+  .controls{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start;margin-bottom:14px}
+  @media (max-width:920px){.controls{grid-template-columns:1fr}}
 
-  .settings h3{margin:8px 0 10px; font-size:16px}
-  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-  .chip{
-    border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06);
-    padding:8px 12px; border-radius:999px; cursor:pointer; user-select:none; transition:.15s; font-size:14px
-  }
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.10);border-radius:var(--radius);padding:14px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .chip{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);padding:8px 12px;border-radius:999px;
+        cursor:pointer;user-select:none;font-size:14px;transition:.15s}
   .chip input{display:none}
-  .chip.active{border-color:var(--accent2); background:rgba(0,224,164,.14)}
-  .mode{display:flex; gap:10px}
+  .chip.active{border-color:var(--accent2);background:rgba(0,224,164,.14)}
+  .btn{background:linear-gradient(135deg,var(--accent),#5f40ff);color:#fff;border:none;padding:12px 16px;border-radius:12px;
+       font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(124,92,255,.35)}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.18)}
+  .btn.alt{background:linear-gradient(135deg,var(--accent2),#02c38c)}
+  .note{color:var(--muted);font-size:12px}
 
-  .btn{
-    background:linear-gradient(135deg, var(--accent), #5f40ff);
-    color:white; border:none; padding:12px 18px; border-radius:12px; font-weight:600; cursor:pointer;
-    box-shadow:0 8px 20px rgba(124,92,255,.35); transition:transform .06s ease, filter .2s ease;
-  }
-  .btn:hover{filter:brightness(1.07)}
-  .btn:active{transform:translateY(1px)}
-  .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.16)}
-  .btn.alt{background:linear-gradient(135deg, var(--accent2), #02c38c); box-shadow:0 8px 20px rgba(2,195,140,.35)}
+  .game{display:grid;grid-template-columns:1fr 320px;gap:14px}
+  @media (max-width:1010px){.game{grid-template-columns:1fr}}
 
-  .game{
-    margin-top:12px; display:grid; gap:14px;
-    grid-template-columns:1fr 320px;
-  }
-  @media (max-width:950px){ .game{grid-template-columns:1fr} }
-
-  .qcard{
-    min-height:180px; display:flex; flex-direction:column; gap:12px; justify-content:space-between;
-    background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
-  }
-  .statusbar{
-    display:flex; justify-content:space-between; align-items:center; gap:12px;
-    font-size:14px; color:var(--muted)
-  }
-  .progress{flex:1; height:10px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden}
-  .progress > span{display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--accent2), var(--accent)); transition:width .5s ease}
-
-  .prompt{
-    font-size:clamp(18px,2.6vw,24px); line-height:1.4; margin-top:6px;
-  }
-  .prompt small{display:inline-block; color:var(--muted); font-size:14px}
-  .sound{cursor:pointer; border-radius:10px; padding:6px 10px; border:1px solid rgba(255,255,255,.14)}
-  .blank{display:inline-block; min-width:120px; border-bottom:2px dashed rgba(255,255,255,.4); text-align:center}
-
-  .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-top:8px}
-  .choice{
-    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:12px; padding:12px;
-    cursor:pointer; text-align:center; transition:.15s; font-weight:600
-  }
-  .choice:hover{background:rgba(255,255,255,.10)}
-  .choice.correct{background:rgba(0,224,164,.18); border-color:var(--accent2)}
-  .choice.wrong{background:rgba(255,92,122,.18); border-color:var(--bad)}
-
-  .inputRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-  input[type="text"]{
-    flex:1; min-width:200px; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.18);
-    background:rgba(255,255,255,.06); color:white; outline:none; font-size:16px;
-  }
-
-  .feedback{
-    border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,.16);
-    background:rgba(255,255,255,.06); display:none;
-  }
-  .feedback.good{display:block; border-color:var(--accent2); background:rgba(0,224,164,.14)}
-  .feedback.bad{display:block; border-color:var(--bad); background:rgba(255,92,122,.14)}
-  .miniTable{
-    margin-top:8px; display:grid; grid-template-columns:120px 1fr; gap:6px; font-size:14px
-  }
-  .miniTable div{padding:4px 8px; border-radius:8px; background:rgba(255,255,255,.06)}
-  .miniTable .label{color:var(--muted); background:transparent; padding-left:0}
-
-  .side{
-    display:grid; gap:12px;
-  }
-  .statCard{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-  .pill{
-    border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); border-radius:14px; padding:12px; text-align:center
-  }
-  .big{font-size:22px; font-weight:800}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:14px;margin-bottom:8px}
+  .progress{flex:1;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+  .progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s ease}
+  .pill{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);border-radius:14px;padding:10px;text-align:center}
+  .big{font-size:22px;font-weight:800}
   .muted{color:var(--muted)}
-  .hint{font-size:14px}
-  .toggle{
-    display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none
-  }
-  .toggle input{appearance:none; width:40px; height:22px; background:rgba(255,255,255,.18); border-radius:999px; position:relative; outline:none; transition:.2s}
-  .toggle input:checked{background:linear-gradient(90deg,var(--accent2), var(--accent))}
-  .toggle input::after{
-    content:""; position:absolute; width:18px; height:18px; top:2px; left:2px; border-radius:50%;
-    background:white; transition:.2s
-  }
-  .toggle input:checked::after{left:20px}
 
-  .footer{margin-top:14px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap}
-  .rulecard{background:rgba(255,255,255,.06); border:1px dashed rgba(255,255,255,.20); border-radius:12px; padding:12px; font-size:14px}
-  .note{color:var(--muted); font-size:12px}
+  .board{display:grid;grid-template-columns:1fr;gap:12px}
+  .bins{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .bins.three{grid-template-columns:repeat(3,1fr)}
+  .bin{background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.22);border-radius:14px;padding:10px;min-height:140px}
+  .binHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .binTitle{font-weight:800;letter-spacing:.4px}
+  .binCount{color:var(--muted);font-size:12px}
+
+  .pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px}
+  .tile{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 10px;
+        cursor:grab;user-select:none;transition:.12s;font-weight:700}
+  .tile:active{cursor:grabbing}
+  .tile.correct{background:rgba(0,224,164,.18);border-color:var(--accent2)}
+  .tile.wrong{background:rgba(255,92,122,.18);border-color:var(--bad)}
+  .tile.selected{outline:2px solid var(--accent); box-shadow:0 0 0 2px rgba(124,92,255,.35) inset}
+  .bin.dropTarget{background:rgba(255,255,255,.10);border-color:var(--accent2)}
+  .hint{font-size:14px}
+  .feedback{margin-top:8px;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.16);
+            background:rgba(255,255,255,.06);display:none}
+  .feedback.good{display:block;border-color:var(--accent2);background:rgba(0,224,164,.14)}
+  .feedback.bad{display:block;border-color:var(--bad);background:rgba(255,92,122,.14)}
+  .footer{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
 
   /* Konfetti */
-  canvas#confetti{position:fixed; inset:0; pointer-events:none; z-index:5}
-
-  /* Skjermleser-område */
-  .sr{position:absolute; width:1px; height:1px; margin:-1px; clip:rect(0 0 0 0); overflow:hidden}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:5}
 </style>
 </head>
 <body>
@@ -165,515 +103,451 @@
       <svg viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10h-2a8 8 0 1 0-4.68 7.28l.93 1.78A10 10 0 1 1 12 2Zm5.5 6.5a1.5 1.5 0 0 1 0 3H13v7a1.5 1.5 0 0 1-3 0V9.5c0-.83.67-1.5 1.5-1.5h6Z"/></svg>
     </div>
     <div>
-      <h1>VerbSpill ⚡ – presens • preteritum • perfektum</h1>
-      <div class="subtitle">Tren hverdagsverb med flervalg eller skriv selv. Umiddelbar tilbakemelding og hint.</div>
+      <h1>SubstantivSpill ⚡ – sorter riktig</h1>
+      <div class="subtitle">Dra ord til riktig kategori – eller klikk på et ord og så på en boks.</div>
     </div>
   </header>
 
   <section class="panel">
     <div class="controls">
-      <div class="card settings">
+      <div class="card">
         <h3>Velg modus</h3>
-        <div class="mode">
-          <label class="chip active" id="modeChoice"><input type="radio" name="mode" value="choice" checked>🎯 Flervalg</label>
-          <label class="chip" id="modeType"><input type="radio" name="mode" value="type">⌨️ Skriv selv</label>
+        <div class="row" id="modeRow">
+          <label class="chip active"><input type="radio" name="mode" value="entall-flertall" checked> Entall / Flertall</label>
+          <label class="chip"><input type="radio" name="mode" value="ubestemt-bestemt"> Ubestemt / Bestemt</label>
+          <label class="chip"><input type="radio" name="mode" value="felles-egennavn"> Fellesnavn / Egennavn</label>
+          <label class="chip"><input type="radio" name="mode" value="kjonn"> Kjønn: en / ei / et</label>
         </div>
-
-        <h3 style="margin-top:12px;">Velg tider (du kan velge flere)</h3>
-        <div class="row" id="tenseRow">
-          <label class="chip active"><input type="checkbox" value="presens" checked> Presens</label>
-          <label class="chip active"><input type="checkbox" value="preteritum" checked> Preteritum</label>
-          <label class="chip active"><input type="checkbox" value="perfektum" checked> Perfektum</label>
-        </div>
-
         <div class="row" style="margin-top:10px">
-          <div class="toggle">
-            <input type="checkbox" id="speakTgl" />
-            <span>🔊 Les opp setning</span>
-          </div>
-          <div class="toggle">
-            <input type="checkbox" id="autoNextTgl" checked />
-            <span>⏭️ Automatisk neste ved riktig svar</span>
-          </div>
+          <label class="chip active" id="easy"><input type="radio" name="diff" value="easy" checked> Lett (8 ord)</label>
+          <label class="chip" id="hard"><input type="radio" name="diff" value="hard"> Vanskelig (12 ord)</label>
+          <label class="chip" id="clickMode"><input type="checkbox" id="clickOnly"> Klikk i stedet for å dra</label>
         </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn alt" id="startBtn">Start ▶</button>
+          <button class="btn ghost" id="resetBtn">Tilbakestill poeng</button>
+        </div>
+        <div class="note" style="margin-top:6px">Beste poengsum lagres i nettleseren.</div>
       </div>
 
       <div class="card">
-        <h3>Runder & vanskelighet</h3>
-        <div class="row">
-          <label class="chip active"><input type="radio" name="rounds" value="10" checked> 10 oppgaver</label>
-          <label class="chip"><input type="radio" name="rounds" value="15"> 15 oppgaver</label>
-          <label class="chip"><input type="radio" name="rounds" value="∞"> Uendelig</label>
+        <h3>Statistikk</h3>
+        <div class="row" style="gap:10px">
+          <div class="pill"><div class="muted">Oppgave</div><div class="big" id="qNum">0</div></div>
+          <div class="pill"><div class="muted">Poeng</div><div class="big" id="score">0</div></div>
+          <div class="pill"><div class="muted">Streak</div><div class="big" id="streak">0</div></div>
+          <div class="pill"><div class="muted">Beste</div><div class="big" id="best">0</div></div>
         </div>
-        <div class="row" style="margin-top:10px">
-          <label class="chip active" id="distractorsEasy"><input type="radio" name="diff" value="easy" checked> Lett (liknende alternativer)</label>
-          <label class="chip" id="distractorsHard"><input type="radio" name="diff" value="hard"> Vanskelig (blandede alternativer)</label>
+        <div class="statusbar" style="margin-top:10px">
+          <div class="progress" aria-hidden="true"><span id="prog"></span></div>
         </div>
-        <div class="row" style="margin-top:12px">
-          <button class="btn alt" id="startBtn">Start ▶</button>
-          <button class="btn ghost" id="resetBtn">Tilbakestill</button>
-        </div>
-        <div class="note" style="margin-top:8px">Høyeste poengsum lagres i nettleseren.</div>
+        <div class="note">Tips: Klikk «Hint» under for regler og eksempler.</div>
       </div>
     </div>
 
     <div class="game">
-      <div class="card qcard">
+      <div class="card">
         <div class="statusbar">
-          <div><span class="muted">Oppgave</span> <strong id="qNum">0</strong></div>
-          <div class="progress" aria-hidden="true"><span id="prog"></span></div>
-          <div><span class="muted">Poeng</span> <strong id="score">0</strong></div>
+          <div><span class="muted">Modus</span> <strong id="modeTitle">–</strong></div>
+          <div><span class="muted">Runde</span> <strong id="roundInfo">–</strong></div>
         </div>
 
-        <div>
-          <div class="row" style="justify-content:space-between; gap:8px">
-            <div class="muted">Bruk <strong id="tenseTag">–</strong></div>
-            <button class="sound" id="speakBtn" title="Les opp">🔊 Les</button>
-          </div>
-          <div class="prompt" id="prompt">
-            <small>Fullfør setningen:</small><br>
-            <span id="sentence">Trykk <strong>Start</strong> for å begynne.</span>
-          </div>
+        <div class="board">
+          <div class="pool" id="pool" aria-label="Ord som skal sorteres"></div>
 
-          <div id="choiceWrap" class="choices" style="display:none"></div>
-
-          <div id="typeWrap" class="inputRow" style="display:none">
-            <input type="text" id="answerInput" placeholder="Skriv riktig form her …" autocomplete="off" />
-            <button class="btn" id="checkBtn">Sjekk ✅</button>
-          </div>
+          <div id="bins" class="bins"></div>
         </div>
 
-        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div id="feedback" class="feedback" aria-live="polite"></div>
 
         <div class="footer">
-          <button class="btn ghost" id="hintBtn">💡 Hint</button>
-          <button class="btn" id="nextBtn" disabled>Neste ➜</button>
+          <div class="row">
+            <button class="btn ghost" id="hintBtn">💡 Hint</button>
+            <button class="btn ghost" id="shuffleBtn">🔄 Bland ord</button>
+          </div>
+          <div class="row">
+            <button class="btn" id="nextBtn" disabled>Neste runde ➜</button>
+          </div>
         </div>
       </div>
 
-      <aside class="side">
-        <div class="statCard">
-          <div class="pill">
-            <div class="muted">Streak</div>
-            <div class="big" id="streak">0</div>
-          </div>
-          <div class="pill">
-            <div class="muted">Best</div>
-            <div class="big" id="best">0</div>
-          </div>
-        </div>
-
-        <div class="card hint">
-          <strong>Regler i korte trekk</strong>
-          <ul>
-            <li><b>Presens</b>: ofte <i>-er</i> (spiser, bor, lærer).</li>
-            <li><b>Preteritum</b> (i går): svake verb <i>-te/-et</i> (kjørte/åpnet), sterke verb endrer stamme (gikk, skrev).</li>
-            <li><b>Perfektum</b>: <b>har</b> + <i>perfektum partisipp</i> (har spist, har gått).</li>
-          </ul>
-          <div class="note">Noen verb har flere riktige former (f.eks. <i>sto/stod</i>, <i>ga/gav</i>, <i>lagde/laget</i>). Spillet godtar de vanlige variantene.</div>
-        </div>
-
-        <div class="card" id="tableCard" style="display:none">
-          <div><strong id="tableTitle">Bøying</strong></div>
-          <div class="miniTable" id="miniTable"></div>
-        </div>
+      <aside class="card hint">
+        <strong>Regler i korte trekk</strong>
+        <ul style="margin-top:8px">
+          <li><b>Entall</b> = én / ett. <b>Flertall</b> = flere.</li>
+          <li><b>Ubestemt</b>: ny informasjon (f.eks. <i>en stol, stoler</i>). <b>Bestemt</b>: noe kjent (f.eks. <i>stolen, stolene</i>).</li>
+          <li><b>Fellesnavn</b> (vanlige ting/ord) vs. <b>Egennavn</b> (navn på personer, steder, merker).</li>
+          <li><b>Kjønn</b>: <b>en-ord</b>, <b>ei-ord</b>, <b>et-ord</b>. (Mange sier også <i>en bok</i> – her bruker vi skolebøyning.)</li>
+        </ul>
+        <div class="note">Du kan dra med musen, eller klikke på et ord og deretter på en boks.</div>
       </aside>
     </div>
   </section>
-
-  <div class="sr" id="live" aria-live="polite"></div>
 </div>
 
 <script>
-/*** DATA ***/
-const VERBS = {
-  "være":      {presens:["er"],      preteritum:["var"],         perfektum:["vært"]},
-  "ha":        {presens:["har"],     preteritum:["hadde"],       perfektum:["hatt"]},
-  "gjøre":     {presens:["gjør"],    preteritum:["gjorde"],      perfektum:["gjort"]},
-  "gå":        {presens:["går"],     preteritum:["gikk"],        perfektum:["gått"]},
-  "komme":     {presens:["kommer"],  preteritum:["kom"],         perfektum:["kommet"]},
-  "spise":     {presens:["spiser"],  preteritum:["spiste"],      perfektum:["spist"]},
-  "drikke":    {presens:["drikker"], preteritum:["drakk"],       perfektum:["drukket"]},
-  "sove":      {presens:["sover"],   preteritum:["sov"],         perfektum:["sovet"]},
-  "kjøpe":     {presens:["kjøper"],  preteritum:["kjøpte"],      perfektum:["kjøpt"]},
-  "selge":     {presens:["selger"],  preteritum:["solgte"],      perfektum:["solgt"]},
-  "si":        {presens:["sier"],    preteritum:["sa"],          perfektum:["sagt"]},
-  "skrive":    {presens:["skriver"], preteritum:["skrev"],       perfektum:["skrevet"]},
-  "lese":      {presens:["leser"],   preteritum:["leste"],       perfektum:["lest"]},
-  "se":        {presens:["ser"],     preteritum:["så"],          perfektum:["sett"]},
-  "høre":      {presens:["hører"],   preteritum:["hørte"],       perfektum:["hørt"]},
-  "snakke":    {presens:["snakker"], preteritum:["snakket"],     perfektum:["snakket"]},
-  "lære":      {presens:["lærer"],   preteritum:["lærte"],       perfektum:["lært"]},
-  "forstå":    {presens:["forstår"], preteritum:["forsto","forstod"], perfektum:["forstått"]},
-  "få":        {presens:["får"],     preteritum:["fikk"],        perfektum:["fått"]},
-  "gi":        {presens:["gir"],     preteritum:["ga","gav"],    perfektum:["gitt"]},
-  "ta":        {presens:["tar"],     preteritum:["tok"],         perfektum:["tatt"]},
-  "sette":     {presens:["setter"],  preteritum:["satte"],       perfektum:["satt"]},
-  "legge":     {presens:["legger"],  preteritum:["la"],          perfektum:["lagt"]},
-  "stå":       {presens:["står"],    preteritum:["sto","stod"],  perfektum:["stått"]},
-  "sitte":     {presens:["sitter"],  preteritum:["satt"],        perfektum:["sittet"]},
-  "bli":       {presens:["blir"],    preteritum:["ble"],         perfektum:["blitt"]},
-  "dra":       {presens:["drar"],    preteritum:["dro"],         perfektum:["dratt","dradd"]},
-  "møte":      {presens:["møter"],   preteritum:["møtte"],       perfektum:["møtt"]},
-  "jobbe":     {presens:["jobber"],  preteritum:["jobbet"],      perfektum:["jobbet"]},
-  "bo":        {presens:["bor"],     preteritum:["bodde"],       perfektum:["bodd"]},
-  "lage":      {presens:["lager"],   preteritum:["lagde","laget"], perfektum:["laget","lagd"]},
-  "åpne":      {presens:["åpner"],   preteritum:["åpnet"],       perfektum:["åpnet"]},
-  "lukke":     {presens:["lukker"],  preteritum:["lukket"],      perfektum:["lukket"]},
-  "vaske":     {presens:["vasker"],  preteritum:["vasket"],      perfektum:["vasket"]},
-  "sykle":     {presens:["sykler"],  preteritum:["syklet"],      perfektum:["syklet"]},
-  "kjøre":     {presens:["kjører"],  preteritum:["kjørte"],      perfektum:["kjørt"]},
-  "vente":     {presens:["venter"],  preteritum:["ventet"],      perfektum:["ventet"]},
-  "hjelpe":    {presens:["hjelper"], preteritum:["hjalp"],       perfektum:["hjulpet"]},
-  "bruke":     {presens:["bruker"],  preteritum:["brukte"],      perfektum:["brukt"]},
-  "tenke":     {presens:["tenker"],  preteritum:["tenkte"],      perfektum:["tenkt"]},
-  "spille":    {presens:["spiller"], preteritum:["spilte"],      perfektum:["spilt"]},
-  "ringe":     {presens:["ringer"],  preteritum:["ringte"],      perfektum:["ringt"]},
-  "finne":     {presens:["finner"],  preteritum:["fant"],        perfektum:["funnet"]},
-  "miste":     {presens:["mister"],  preteritum:["mistet"],      perfektum:["mistet"]},
-};
+/** ---------- DATA ---------- **/
+const NOUNS = [
+  {base:"stol", gender:"en", forms:{sgInd:"stol", sgDef:"stolen", plInd:"stoler", plDef:"stolene"}, type:"fellesnavn"},
+  {base:"bok", gender:"ei", forms:{sgInd:"bok", sgDef:"boka", plInd:"bøker", plDef:"bøkene"}, type:"fellesnavn"},
+  {base:"hus", gender:"et", forms:{sgInd:"hus", sgDef:"huset", plInd:"hus", plDef:"husene"}, type:"fellesnavn"},
+  {base:"barn", gender:"et", forms:{sgInd:"barn", sgDef:"barnet", plInd:"barn", plDef:"barna"}, type:"fellesnavn"},
+  {base:"katt", gender:"en", forms:{sgInd:"katt", sgDef:"katten", plInd:"katter", plDef:"kattene"}, type:"fellesnavn"},
+  {base:"dør", gender:"ei", forms:{sgInd:"dør", sgDef:"døra", plInd:"dører", plDef:"dørene"}, type:"fellesnavn"},
+  {base:"jente", gender:"ei", forms:{sgInd:"jente", sgDef:"jenta", plInd:"jenter", plDef:"jentene"}, type:"fellesnavn"},
+  {base:"gutt", gender:"en", forms:{sgInd:"gutt", sgDef:"gutten", plInd:"gutter", plDef:"guttene"}, type:"fellesnavn"},
+  {base:"eple", gender:"et", forms:{sgInd:"eple", sgDef:"eplet", plInd:"epler", plDef:"eplene"}, type:"fellesnavn"},
+  {base:"språk", gender:"et", forms:{sgInd:"språk", sgDef:"språket", plInd:"språk", plDef:"språkene"}, type:"fellesnavn"},
+  {base:"venn", gender:"en", forms:{sgInd:"venn", sgDef:"vennen", plInd:"venner", plDef:"vennene"}, type:"fellesnavn"},
+  {base:"nabo", gender:"en", forms:{sgInd:"nabo", sgDef:"naboen", plInd:"naboer", plDef:"naboene"}, type:"fellesnavn"},
+  {base:"familie", gender:"en", forms:{sgInd:"familie", sgDef:"familien", plInd:"familier", plDef:"familiene"}, type:"fellesnavn"},
+  {base:"skole", gender:"en", forms:{sgInd:"skole", sgDef:"skolen", plInd:"skoler", plDef:"skolene"}, type:"fellesnavn"},
+  {base:"lærer", gender:"en", forms:{sgInd:"lærer", sgDef:"læreren", plInd:"lærere", plDef:"lærerne"}, type:"fellesnavn"},
+  {base:"elev", gender:"en", forms:{sgInd:"elev", sgDef:"eleven", plInd:"elever", plDef:"elevene"}, type:"fellesnavn"},
+  {base:"by", gender:"en", forms:{sgInd:"by", sgDef:"byen", plInd:"byer", plDef:"byene"}, type:"fellesnavn"},
+  {base:"mobil", gender:"en", forms:{sgInd:"mobil", sgDef:"mobilen", plInd:"mobiler", plDef:"mobilene"}, type:"fellesnavn"},
+  {base:"klokke", gender:"ei", forms:{sgInd:"klokke", sgDef:"klokka", plInd:"klokker", plDef:"klokkene"}, type:"fellesnavn"},
+  {base:"kopp", gender:"en", forms:{sgInd:"kopp", sgDef:"koppen", plInd:"kopper", plDef:"koppene"}, type:"fellesnavn"},
+];
 
-const TEMPLATES = {
-  presens: [
-    {text:"Jeg <span class='blank'>___</span> frokost nå.", verbs:["spise"]},
-    {text:"Han <span class='blank'>___</span> på jobb hver dag.", verbs:["dra","gå","jobbe"]},
-    {text:"Vi <span class='blank'>___</span> norsk i klassen.", verbs:["lære","snakke"]},
-    {text:"De <span class='blank'>___</span> på TV om kvelden.", verbs:["se"]},
-    {text:"Hun <span class='blank'>___</span> buss til skolen.", verbs:["ta"]},
-    {text:"Jeg <span class='blank'>___</span> mye vann.", verbs:["drikke"]},
-    {text:"Vi <span class='blank'>___</span> hiphop.", verbs:["høre"]},
-    {text:"Jeg <span class='blank'>___</span> i Oslo.", verbs:["bo"]},
-    {text:"Du <span class='blank'>___</span> mobilen din.", verbs:["bruke","ringe"]},
-    {text:"Vi <span class='blank'>___</span> fotball etter skolen.", verbs:["spille"]},
-    {text:"Hun <span class='blank'>___</span> bil til jobb.", verbs:["kjøre"]},
-  ],
-  preteritum: [
-    {text:"I går <span class='blank'>___</span> jeg til butikken.", verbs:["gå","dra"]},
-    {text:"Han <span class='blank'>___</span> middag i går.", verbs:["lage"]},
-    {text:"Vi <span class='blank'>___</span> film i helgen.", verbs:["se"]},
-    {text:"Hun <span class='blank'>___</span> melk til frokost.", verbs:["drikke"]},
-    {text:"De <span class='blank'>___</span> mye i går kveld.", verbs:["snakke","lese"]},
-    {text:"I morges <span class='blank'>___</span> jeg lenge.", verbs:["sove"]},
-    {text:"Vi <span class='blank'>___</span> bussen til byen.", verbs:["ta"]},
-    {text:"Hun <span class='blank'>___</span> en bok i fjor.", verbs:["skrive","lese"]},
-    {text:"Jeg <span class='blank'>___</span> nye sko i går.", verbs:["kjøpe"]},
-    {text:"Han <span class='blank'>___</span> meg i går.", verbs:["ringe","møte"]},
-  ],
-  perfektum: [
-    {text:"Jeg har <span class='blank'>___</span> norsk i to år.", verbs:["lære"]},
-    {text:"Vi har <span class='blank'>___</span> middag.", verbs:["lage","spise"]},
-    {text:"Hun har <span class='blank'>___</span> mye vann i dag.", verbs:["drikke"]},
-    {text:"De har <span class='blank'>___</span> filmen allerede.", verbs:["se"]},
-    {text:"Jeg har <span class='blank'>___</span> en ny bok.", verbs:["kjøpe"]},
-    {text:"Han har <span class='blank'>___</span> til skolen.", verbs:["gå","dra"]},
-    {text:"Vi har <span class='blank'>___</span> mye i kveld.", verbs:["snakke"]},
-    {text:"Hun har <span class='blank'>___</span> i Oslo i fem år.", verbs:["bo"]},
-    {text:"Jeg har <span class='blank'>___</span> telefonen min.", verbs:["mistet","funnet"]},
-    {text:"De har <span class='blank'>___</span> meg med leksene.", verbs:["hjelpe"]},
-  ]
-};
+const PROPER = ["Oslo","Norge","Europa","Gjøvik","Innlandet","Ali","Maria","Ahmed","Sara","Jon","Ikea","Google"];
 
-const TENSE_LABEL = {
-  presens:"PRESENS (nå)",
-  preteritum:"PRETERITUM (i går)",
-  perfektum:"PERFEKTUM (har + partisipp)"
-};
-
-/*** STATE ***/
-let state = {
-  mode:"choice",
-  tenses:["presens","preteritum","perfektum"],
-  diff:"easy",
-  rounds:10,
-  qCount:0, score:0, streak:0,
-  best: Number(localStorage.getItem("verbBest")||0),
-  current:null, locked:false
-};
-
-/*** HELPERS ***/
+/** ---------- STATE ---------- **/
 const byId = id => document.getElementById(id);
 const rand = arr => arr[Math.floor(Math.random()*arr.length)];
 const shuffle = arr => arr.sort(()=>Math.random()-0.5);
-// Bruk regex, ikke replaceAll, for bedre kompatibilitet
-const normalize = s => (s||"").trim().toLowerCase().replace(/\s+/g, " ");
 
-function speak(text){
-  if(!byId("speakTgl").checked) return;
-  if(!("speechSynthesis" in window)) return;
-  const u = new SpeechSynthesisUtterance(text);
-  let voices = [];
-  try { voices = window.speechSynthesis.getVoices(); } catch(e){}
-  const nb = voices.find(v => /nb|no-NO|bokmål|norsk/i.test((v.lang||"")+(v.name||""))) ||
-             voices.find(v => /no|nb/i.test(v.lang||"")) || null;
-  if(nb) u.voice = nb;
-  u.lang = "nb-NO"; u.rate = 1; u.pitch = 1;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
+let state = {
+  mode: "entall-flertall",
+  size: 8,
+  qNum: 0,
+  placed: 0,
+  score: 0,
+  streak: 0,
+  best: Number(localStorage.getItem("nounBest") || 0),
+  currentItems: [], // {id, text, tags:{number,def,gender,type}}
+  selectedTileId: null
+};
 
-function buildMiniTable(inf){
-  const v = VERBS[inf]; if(!v) return "";
-  const lines = [
-    ["Infinitiv", "å " + inf],
-    ["Presens", v.presens.join(" / ")],
-    ["Preteritum", v.preteritum.join(" / ")],
-    ["Perfektum", "har " + v.perfektum[0] + (v.perfektum.length>1?(" / har " + v.perfektum.slice(1).join(" / har ")): "")]
-  ];
-  return lines.map(([a,b])=>`<div class="label">${a}</div><div>${b}</div>`).join("");
-}
-
-function genQuestion(){
-  const activeTenses = state.tenses;
-  if(activeTenses.length===0){ alert("Velg minst én tid."); return null; }
-  const tense = rand(activeTenses);
-  const template = rand(TEMPLATES[tense]);
-  const inf = rand(template.verbs);
-  const forms = VERBS[inf][tense];
-
-  // Flervalg-alternativer
-  let options = [];
-  if(state.mode==="choice"){
-    const correct = rand(forms);
-    options = [correct];
-    let pool = Object.entries(VERBS)
-      .filter(([k])=>k!==inf)
-      .map(([k,v])=>({inf:k, form: rand(v[tense]) }));
-    if(state.diff==="easy"){
-      const end = correct.slice(-2);
-      pool = pool.filter(p=>p.form.slice(-2)===end || p.form[0]===correct[0]).concat(pool);
-    }
-    options = options.concat(shuffle(pool).slice(0,3).map(p=>p.form));
-    options = shuffle(Array.from(new Set(options)).slice(0,4));
-    while(options.length<4){
-      const any = rand(pool).form;
-      if(!options.includes(any)) options.push(any);
-    }
-  }
-
-  const sentenceHTML = template.text;
-  const readSentence = template.text.replace(/<[^>]*>/g,"").replace("___","…");
-  return {tense, inf, sentenceHTML, options, correctForms:forms, readSentence};
-}
-
-function startGame(){
-  state.qCount=0; state.score=0; state.streak=0; state.locked=false; state.current=null;
-  updateHUD();
-  nextQuestion();
+/** ---------- HELPERS ---------- **/
+function setMode(val){
+  state.mode = val;
+  const titleMap = {
+    "entall-flertall": "ENTALL / FLERTALL",
+    "ubestemt-bestemt": "UBESTEMT / BESTEMT",
+    "felles-egennavn": "FELLESNAVN / EGENNAVN",
+    "kjonn": "KJØNN: en / ei / et"
+  };
+  byId("modeTitle").textContent = titleMap[val] || "–";
 }
 
 function updateHUD(){
-  byId("qNum").textContent = state.qCount;
+  byId("qNum").textContent = state.qNum;
   byId("score").textContent = state.score;
   byId("streak").textContent = state.streak;
   byId("best").textContent = state.best;
-  const target = (state.rounds===Infinity? 100 : Math.max(1,state.rounds));
-  const pct = Math.min(100, Math.round(100*state.qCount/target));
+  byId("roundInfo").textContent = state.placed + " / " + state.currentItems.length;
+  const pct = state.currentItems.length ? Math.round(100*state.placed/state.currentItems.length) : 0;
   byId("prog").style.width = pct + "%";
 }
 
-function renderQuestion(q){
-  if(!q) return;
-  byId("tenseTag").textContent = TENSE_LABEL[q.tense];
-  byId("sentence").innerHTML = q.sentenceHTML;
-  const fb = byId("feedback"); fb.style.display = "none"; fb.className = "feedback";
-  byId("tableCard").style.display="none";
-  byId("tableTitle").textContent = "Bøying – " + q.inf;
-  byId("miniTable").innerHTML = buildMiniTable(q.inf);
-  byId("nextBtn").disabled = true;
-  const input = byId("answerInput"); if(input){ input.value = ""; }
-  byId("choiceWrap").style.display = (state.mode==="choice") ? "grid" : "none";
-  byId("typeWrap").style.display   = (state.mode==="type") ? "flex" : "none";
+function tokenizeForMode(){
+  const items = [];
+  const size = state.size;
 
-  if(state.mode==="choice"){
-    const wrap = byId("choiceWrap"); wrap.innerHTML="";
-    q.options.forEach(opt=>{
-      const btn = document.createElement("button");
-      btn.className = "choice"; btn.type="button";
-      btn.textContent = opt;
-      btn.addEventListener("click", ()=>checkAnswer(opt));
-      wrap.appendChild(btn);
+  if(state.mode === "felles-egennavn"){
+    const commons = shuffle([...NOUNS]).slice(0, Math.ceil(size/2));
+    const propers = shuffle([...PROPER]).slice(0, size - commons.length);
+    commons.forEach((n,i)=>{
+      items.push({
+        id: "c"+i, text: n.forms.sgInd, tags:{type:"fellesnavn"}
+      });
+    });
+    propers.forEach((p,i)=>{
+      items.push({
+        id: "p"+i, text: p, tags:{type:"egennavn"}
+      });
     });
   }
-
-  if(byId("speakTgl").checked){ speak(q.readSentence); }
-}
-
-function isCorrect(input, forms){
-  const norm = normalize(input);
-  return forms.some(f => normalize(f)===norm);
-}
-
-function checkAnswer(value){
-  if(state.locked) return;
-  state.locked = true;
-  const q = state.current;
-  const ok = isCorrect(value, q.correctForms);
-  const fb = byId("feedback");
-  const sentenceClean = q.sentenceHTML.replace("___", `<b>${value}</b>`);
-  if(ok){
-    state.score += 10;
-    state.streak += 1;
-    fb.className = "feedback good";
-    fb.innerHTML = `✅ Riktig! ${sentenceClean}
-      <div class="miniTable">${buildMiniTable(q.inf)}</div>`;
-    fireConfetti();
-    if(byId("autoNextTgl").checked){
-      setTimeout(()=>{ nextQuestion(); }, 900);
-    } else {
-      byId("nextBtn").disabled = false;
-    }
-  } else {
-    state.streak = 0;
-    fb.className = "feedback bad";
-    const correctShow = q.correctForms[0];
-    fb.innerHTML = `❌ Nesten! Riktig form i denne setningen er <b>${correctShow}</b>.<br>
-      ${q.tense==="perfektum" ? "Husk: <b>har</b> + perfektum partisipp." : ""}
-      <div class="miniTable">${buildMiniTable(q.inf)}</div>`;
-    byId("nextBtn").disabled = false;
-
-    if(state.mode==="choice"){
-      document.querySelectorAll(".choice").forEach(el=>{
-        const t = normalize(el.textContent);
-        if(isCorrect(t, q.correctForms)) el.classList.add("correct");
-        if(t===normalize(value) && !isCorrect(t, q.correctForms)) el.classList.add("wrong");
+  else if(state.mode === "kjonn"){
+    const pick = shuffle([...NOUNS]).slice(0, size);
+    pick.forEach((n,i)=>{
+      items.push({
+        id:"g"+i, text: n.forms.sgInd, tags:{gender:n.gender}
       });
-    }
+    });
   }
-  if(state.score > state.best){ state.best = state.score; localStorage.setItem("verbBest", String(state.best)); }
-  updateHUD();
-  byId("tableCard").style.display="block";
-  state.locked = false;
+  else {
+    // entall/flertall, ubestemt/bestemt
+    const forms = [];
+    NOUNS.forEach(n=>{
+      forms.push({text:n.forms.sgInd,  number:"entall", def:"ubestemt"});
+      forms.push({text:n.forms.sgDef,  number:"entall", def:"bestemt"});
+      forms.push({text:n.forms.plInd,  number:"flertall", def:"ubestemt"});
+      forms.push({text:n.forms.plDef,  number:"flertall", def:"bestemt"});
+    });
+    const sample = shuffle(forms).slice(0, size);
+    sample.forEach((f,i)=> items.push({id:"f"+i, text:f.text, tags:{number:f.number, def:f.def}}));
+  }
+
+  return shuffle(items);
 }
 
-function nextQuestion(){
-  if(state.rounds!==Infinity && state.qCount>=state.rounds){
-    endGame(); return;
+function binsForMode(){
+  if(state.mode==="entall-flertall"){
+    return [
+      {key:"entall", title:"ENTALL"},
+      {key:"flertall", title:"FLERTALL"},
+    ];
   }
-  state.qCount++;
-  updateHUD();
-  state.current = genQuestion();
-  renderQuestion(state.current);
+  if(state.mode==="ubestemt-bestemt"){
+    return [
+      {key:"ubestemt", title:"UBESTEMT"},
+      {key:"bestemt", title:"BESTEMT"},
+    ];
+  }
+  if(state.mode==="felles-egennavn"){
+    return [
+      {key:"fellesnavn", title:"FELLESNAVN"},
+      {key:"egennavn", title:"EGENNAVN"},
+    ];
+  }
+  // kjønn
+  return [
+    {key:"en", title:"EN-ORD"},
+    {key:"ei", title:"EI-ORD"},
+    {key:"et", title:"ET-ORD"},
+  ];
 }
 
-function endGame(){
-  const fb = byId("feedback");
-  fb.style.display="block"; fb.className="feedback good";
-  fb.innerHTML = `👏 Flott jobba! Runde ferdig.<br>
-    Poeng: <b>${state.score}</b> • Beste: <b>${state.best}</b>
-    <div class="note">Tips: Slå på «Skriv selv» for ekstra trening.</div>`;
+function isCorrectForBin(item, binKey){
+  if(state.mode==="entall-flertall"){
+    return item.tags.number === binKey;
+  }
+  if(state.mode==="ubestemt-bestemt"){
+    return item.tags.def === binKey;
+  }
+  if(state.mode==="felles-egennavn"){
+    return item.tags.type === binKey;
+  }
+  if(state.mode==="kjonn"){
+    return item.tags.gender === binKey;
+  }
+  return false;
+}
+
+/** ---------- RENDER ---------- **/
+function renderBoard(){
+  const pool = byId("pool");
+  pool.innerHTML = "";
+  state.currentItems.forEach(it=>{
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.textContent = it.text;
+    t.draggable = !byId("clickOnly").checked;
+    t.dataset.id = it.id;
+    t.addEventListener("dragstart", onDragStart);
+    t.addEventListener("click", onTileClick);
+    pool.appendChild(t);
+  });
+
+  const binsEl = byId("bins");
+  const bins = binsForMode();
+  binsEl.className = "bins" + (bins.length===3? " three": "");
+  binsEl.innerHTML = "";
+  bins.forEach(b=>{
+    const bin = document.createElement("div");
+    bin.className = "bin";
+    bin.dataset.key = b.key;
+    const header = document.createElement("div");
+    header.className = "binHeader";
+    const title = document.createElement("div");
+    title.className = "binTitle";
+    title.textContent = b.title;
+    const count = document.createElement("div");
+    count.className = "binCount";
+    count.textContent = "0";
+    header.appendChild(title); header.appendChild(count);
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    bin.appendChild(header); bin.appendChild(slot);
+
+    // DnD
+    bin.addEventListener("dragover", e=>{e.preventDefault(); bin.classList.add("dropTarget");});
+    bin.addEventListener("dragleave", ()=>bin.classList.remove("dropTarget"));
+    bin.addEventListener("drop", e=>{
+      e.preventDefault(); bin.classList.remove("dropTarget");
+      const id = e.dataTransfer.getData("text/plain");
+      placeTileInBin(id, b.key, bin);
+    });
+    // Klikk-tilordning
+    bin.addEventListener("click", ()=>{
+      const id = state.selectedTileId;
+      if(id) placeTileInBin(id, b.key, bin);
+    });
+
+    binsEl.appendChild(bin);
+  });
+
+  byId("feedback").style.display="none";
+  byId("feedback").className="feedback";
   byId("nextBtn").disabled = true;
 }
 
-function setMode(val){
-  state.mode = val;
-  byId("modeChoice").classList.toggle("active", val==="choice");
-  byId("modeType").classList.toggle("active", val==="type");
-  if(state.current){ renderQuestion(state.current); }
+function onDragStart(e){
+  e.dataTransfer.setData("text/plain", e.currentTarget.dataset.id);
+}
+function onTileClick(e){
+  const was = state.selectedTileId;
+  const id = e.currentTarget.dataset.id;
+  // reset all
+  Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
+  if(was===id){ state.selectedTileId=null; return; }
+  state.selectedTileId = id;
+  e.currentTarget.classList.add("selected");
 }
 
-function setRounds(val){
-  state.rounds = (val==="∞") ? Infinity : Number(val);
+function placeTileInBin(id, binKey, binEl){
+  const item = state.currentItems.find(x=>x.id===id);
+  if(!item) return;
+  // find tile element
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  if(!tile) return;
+
+  // evaluate
+  const ok = isCorrectForBin(item, binKey);
+  tile.classList.remove("selected");
+  if(ok){
+    tile.classList.add("correct");
+    tile.draggable = false;
+    state.placed += 1;
+    state.score += 10;
+    state.streak += 1;
+    // move into bin slot
+    const slot = binEl.querySelector(".slot");
+    slot.appendChild(tile);
+    // update count
+    const countEl = binEl.querySelector(".binCount");
+    countEl.textContent = String((slot.querySelectorAll(".tile").length)||0);
+  }else{
+    tile.classList.add("wrong");
+    state.streak = 0;
+    setTimeout(()=>tile.classList.remove("wrong"), 550);
+  }
+  state.selectedTileId = null;
+  updateHUD();
+
+  if(state.placed === state.currentItems.length){
+    roundComplete();
+  }
 }
 
-function setDiff(val){
-  state.diff = val;
-  byId("distractorsEasy").classList.toggle("active", val==="easy");
-  byId("distractorsHard").classList.toggle("active", val==="hard");
+function roundComplete(){
+  const fb = byId("feedback");
+  fb.style.display="block"; fb.className="feedback good";
+  fb.innerHTML = `🎉 Flott! Du sorterte alle ordene.<br>Poeng denne runden: <b>${state.currentItems.length*10}</b>`;
+  fireConfetti();
+  if(state.score > state.best){
+    state.best = state.score;
+    localStorage.setItem("nounBest", String(state.best));
+  }
+  byId("nextBtn").disabled = false;
+  updateHUD();
 }
 
-function toggleChip(e){
-  const label = e.currentTarget;
-  const cb = label.querySelector("input");
-  cb.checked = !cb.checked;
-  label.classList.toggle("active", cb.checked);
-  const tenses = Array.from(document.querySelectorAll("#tenseRow input:checked")).map(i=>i.value);
-  state.tenses = tenses;
+/** ---------- GAME FLOW ---------- **/
+function startRound(){
+  state.qNum += 1;
+  state.placed = 0;
+  state.currentItems = tokenizeForMode();
+  renderBoard();
+  updateHUD();
 }
 
-/*** KONFETTI ***/
+function startGame(){
+  state.score = 0; state.streak=0; state.qNum=0;
+  startRound();
+}
+
+/** ---------- CONFETTI ---------- **/
 const confettiCanvas = document.getElementById("confetti");
 const ctx = confettiCanvas.getContext("2d");
 let confettiPieces = [];
-function resizeCanvas(){
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
-
+function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+window.addEventListener("resize", resizeCanvas); resizeCanvas();
 function fireConfetti(){
-  const count = 90;
-  for(let i=0;i<count;i++){
+  for(let i=0;i<90;i++){
     confettiPieces.push({
       x: confettiCanvas.width/2, y: confettiCanvas.height/3,
-      vx: (Math.random()*4-2)* (1+Math.random()*1.5),
-      vy: (Math.random()*-3-2),
-      g: 0.09 + Math.random()*0.04,
-      s: 4+Math.random()*6,
-      c: Math.random()<.33? "#7c5cff" : (Math.random()<.5? "#00e0a4" : "#ffd166"),
-      a: 1, r: Math.random()*Math.PI
+      vx: (Math.random()*4-2)*(1+Math.random()*1.5),
+      vy: (Math.random()*-3-2), g: 0.09+Math.random()*0.04,
+      s: 4+Math.random()*6, c: (Math.random()<.33?"#7c5cff":(Math.random()<.5?"#00e0a4":"#ffd166")),
+      a:1, r:Math.random()*Math.PI
     });
   }
 }
-function tick(){
+(function loop(){
   ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  confettiPieces.forEach(p=>{
-    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.r += 0.1; p.a -= 0.008;
-  });
+  confettiPieces.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=0.1; p.a-=0.008; });
   confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
   confettiPieces.forEach(p=>{
-    ctx.globalAlpha = Math.max(0,p.a);
-    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
-    ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s);
-    ctx.restore();
+    ctx.globalAlpha=Math.max(0,p.a); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
   });
-  requestAnimationFrame(tick);
-}
-tick();
+  requestAnimationFrame(loop);
+})();
 
-/*** EVENTER ***/
-document.addEventListener("DOMContentLoaded", function(){
-  byId("modeChoice").addEventListener("click", ()=>setMode("choice"));
-  byId("modeType").addEventListener("click", ()=>setMode("type"));
-
-  document.querySelectorAll("#tenseRow .chip").forEach(chip=>{
-    chip.addEventListener("click", toggleChip);
+/** ---------- EVENTS ---------- **/
+document.addEventListener("DOMContentLoaded", ()=>{
+  // Modus-klikk
+  Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
+    label.addEventListener("click", ()=>{
+      Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
+      label.classList.add("active");
+      const val = label.querySelector("input").value;
+      setMode(val);
+    });
   });
 
-  // Robust: Array.from(...) før forEach
-  Array.from(document.getElementsByName("rounds"))
-    .forEach(r=>r.addEventListener("change", (e)=>setRounds(e.target.value)));
-
-  byId("distractorsEasy").addEventListener("click", ()=>setDiff("easy"));
-  byId("distractorsHard").addEventListener("click", ()=>setDiff("hard"));
+  // Vanskelighet
+  byId("easy").addEventListener("click", ()=>{
+    byId("easy").classList.add("active"); byId("hard").classList.remove("active");
+    state.size = 8;
+  });
+  byId("hard").addEventListener("click", ()=>{
+    byId("hard").classList.add("active"); byId("easy").classList.remove("active");
+    state.size = 12;
+  });
 
   byId("startBtn").addEventListener("click", startGame);
-  byId("resetBtn").addEventListener("click", ()=>{
-    localStorage.removeItem("verbBest"); state.best=0; updateHUD();
-  });
-  byId("nextBtn").addEventListener("click", nextQuestion);
+  byId("nextBtn").addEventListener("click", startRound);
+  byId("resetBtn").addEventListener("click", ()=>{ localStorage.removeItem("nounBest"); state.best=0; updateHUD(); });
 
-  byId("checkBtn").addEventListener("click", ()=>{
-    const val = byId("answerInput").value;
-    if(!val){ byId("answerInput").focus(); return; }
-    checkAnswer(val);
-  });
-  byId("answerInput").addEventListener("keydown", (e)=>{
-    if(e.key==="Enter"){ byId("checkBtn").click(); }
+  byId("shuffleBtn").addEventListener("click", ()=>{
+    // bland bare i pool for ikke-plasserte
+    const pool = byId("pool");
+    const tiles = Array.from(pool.querySelectorAll(".tile"));
+    // Fisher-Yates:
+    for(let i=tiles.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      pool.insertBefore(tiles[j], tiles[i]);
+      const tmp = tiles[i]; tiles[i] = tiles[j]; tiles[j] = tmp;
+    }
   });
 
   byId("hintBtn").addEventListener("click", ()=>{
-    byId("tableCard").style.display = "block";
+    const fb = byId("feedback");
+    fb.style.display="block"; fb.className="feedback";
+    fb.innerHTML = `🔎 <b>Hint:</b> 
+      <ul style="margin:6px 0 0 18px">
+        <li><b>Entall</b>: én/ett. <b>Flertall</b>: flere.</li>
+        <li><b>Ubestemt</b>: en/ei/et + ordet (eller flertall uten -ene). <b>Bestemt</b>: endelse som <i>-en/-a/-et/-ene</i>.</li>
+        <li><b>Egennavn</b> skrives med stor forbokstav (Oslo, Norge, Ahmed).</li>
+        <li><b>Kjønn</b>: en‑, ei‑, et‑ord (her bruker vi skolebøyning – noen sier også «en bok»).</li>
+      </ul>`;
   });
 
-  byId("speakBtn").addEventListener("click", ()=>{
-    if(state.current){ speak(state.current.readSentence); }
-  });
-
-  if(window.speechSynthesis && typeof window.speechSynthesis.addEventListener==="function"){
-    window.speechSynthesis.addEventListener("voiceschanged", function(){});
-  }
-
+  setMode(state.mode);
   updateHUD();
 });
 </script>
