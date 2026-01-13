@@ -155,12 +155,12 @@
           <label class="chip active" id="easy"><input type="radio" name="diff" value="8" checked> Lett (8 ord)</label>
           <label class="chip" id="hard"><input type="radio" name="diff" value="12"> Vanskelig (12 ord)</label>
           <label class="chip" id="clickMode"><input type="checkbox" id="clickOnly"> Klikk i stedet for å dra</label>
-          <button class="chip" id="addWordBtn" style="font-weight:700">➕ Legg til egne ord</button>
+          <button class="chip" id="addWordBtn" style="font-weight:700" type="button">➕ Legg til egne ord</button>
         </div>
 
         <div class="row" style="margin-top:10px">
-          <button class="btn alt" id="startBtn">Start ▶</button>
-          <button class="btn ghost" id="resetBtn">Tilbakestill poeng</button>
+          <button class="btn alt" id="startBtn" type="button">Start ▶</button>
+          <button class="btn ghost" id="resetBtn" type="button">Tilbakestill poeng</button>
         </div>
         <div class="note" style="margin-top:6px">Beste poengsum lagres i nettleseren.</div>
       </div>
@@ -196,11 +196,11 @@
 
         <div class="footer">
           <div class="row">
-            <button class="btn ghost" id="hintBtn">💡 Hint</button>
-            <button class="btn ghost" id="shuffleBtn">🔄 Bland ord</button>
+            <button class="btn ghost" id="hintBtn" type="button">💡 Hint</button>
+            <button class="btn ghost" id="shuffleBtn" type="button">🔄 Bland ord</button>
           </div>
           <div class="row">
-            <button class="btn" id="nextBtn" disabled>Neste runde ➜</button>
+            <button class="btn" id="nextBtn" type="button" disabled>Neste runde ➜</button>
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@
 </div>
 
 <!-- Modal for egne ord -->
-<div class="modalBackdrop" id="modal">
+<div class="modalBackdrop" id="modal" aria-hidden="true">
   <div class="modal">
     <h3>Legg til eget substantiv</h3>
     <div class="grid3">
@@ -260,14 +260,27 @@
     </div>
 
     <div class="row" style="margin-top:10px;justify-content:flex-end">
-      <button class="btn ghost" id="mCancel">Avbryt</button>
-      <button class="btn" id="mSave">Lagre ➕</button>
+      <button class="btn ghost" id="mCancel" type="button">Avbryt</button>
+      <button class="btn" id="mSave" type="button">Lagre ➕</button>
     </div>
     <div class="note" style="margin-top:8px">Tips: Feltene fylles automatisk når du skriver «Base» + «Kjønn», men kan endres.</div>
   </div>
 </div>
 
 <script>
+/* ====== FEILFANGER (viser feil inne i spillet) ====== */
+(function(){
+  const showError = (msg) => {
+    var fb = document.getElementById('feedback');
+    if(!fb) return;
+    fb.style.display='block';
+    fb.className='feedback bad';
+    fb.innerHTML = '⚠️ Feil i skript: ' + (msg || 'ukjent feil') + '<br><span class="note">Last siden på nytt. Hvis feilen kommer igjen, si ifra – jeg fikser det.</span>';
+  };
+  window.addEventListener('error', function(e){ showError(e.message); });
+  window.addEventListener('unhandledrejection', function(e){ showError((e.reason&&e.reason.message)||'Ubehandlet promise-feil'); });
+})();
+
 /** ---------- DATA ---------- **/
 const NOUNS = [
   {base:"stol", gender:"en", forms:{sgInd:"stol", sgDef:"stolen", plInd:"stoler", plDef:"stolene"}, type:"fellesnavn", themes:["hjem","skole","butikk"]},
@@ -615,22 +628,18 @@ function fireConfetti(){
 })();
 
 /** ---------- MODAL: EGNE ORD ---------- **/
-function openModal(){ byId("modal").style.display="grid"; }
-function closeModal(){ byId("modal").style.display="none"; }
+function openModal(){ const m=byId("modal"); m.style.display="grid"; m.setAttribute('aria-hidden','false'); }
+function closeModal(){ const m=byId("modal"); m.style.display="none"; m.setAttribute('aria-hidden','true'); }
 function suggestForms(){
   const base = byId("mBase").value.trim();
   const gender = byId("mGender").value;
   if(!base) return;
-  // enkle forslag (kan redigeres)
   const sgInd = base;
   const sgDef = (gender==="en"? base+"en" : gender==="ei"? base+"a" : base+"et");
-  // naive flertallsforslag (kan være feil for uregelmessige): -er / -ene for de fleste
   let plInd = base + "er";
   let plDef = base + "ene";
-  // noen kjente unntak
   const invariants = ["hus","barn","apotek","språk","brød"];
   if(invariants.includes(base)){ plInd = base; plDef = (base==="brød")? "brødene" : base+"ene"; }
-  // fyll feltene, men la lærer justere manuelt
   byId("mSgInd").value = sgInd;
   byId("mSgDef").value = sgDef;
   byId("mPlInd").value = plInd;
@@ -651,15 +660,13 @@ function saveWordFromModal(){
   if(!base || !gender || !sgInd || !sgDef || !plInd || !plDef){
     alert("Fyll inn alle former (entall/flertall, ubestemt/bestemt)."); return;
   }
-  // Hvis egennavn: lag som eget element i PROPER_BY_THEME
   if(type==="egennavn"){
     themes.forEach(t=>{
       PROPER_BY_THEME[t] = (PROPER_BY_THEME[t]||[]);
       PROPER_BY_THEME[t].push(base.charAt(0).toUpperCase() + base.slice(1));
-      PROPER_BY_THEME[t] = Array.from(new Set(PROPER_BY_THEME[t])); // unik
+      PROPER_BY_THEME[t] = Array.from(new Set(PROPER_BY_THEME[t]));
     });
   } else {
-    // Fellesnavn
     NOUNS.push({
       base, gender,
       forms:{sgInd, sgDef, plInd, plDef},
@@ -668,12 +675,12 @@ function saveWordFromModal(){
     });
   }
   closeModal();
-  alert("Lagt til! Du kan starte en ny runde for å se ordet.");
+  alert("Lagt til! Start en ny runde for å se ordet.");
 }
 
-/** ---------- EVENTS ---------- **/
-document.addEventListener("DOMContentLoaded", ()=>{
-  // Modus-klikk
+/** ---------- EVENTS (ROBUST BINDING) ---------- **/
+function bindEvents(){
+  // Modus
   Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
     label.addEventListener("click", ()=>{
       Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
@@ -690,7 +697,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       cb.checked = !cb.checked;
       chip.classList.toggle("active", cb.checked);
       const sel = Array.from(document.querySelectorAll("#themeRow input:checked")).map(i=>i.value);
-      state.selectedThemes = sel.length? sel : ["skole"]; // minst ett
+      state.selectedThemes = sel.length? sel : ["skole"];
     });
   });
 
@@ -739,9 +746,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
     tag.addEventListener("click", ()=> tag.classList.toggle("active"));
   });
 
+  // Init
   setMode(state.mode);
   updateHUD();
-});
+}
+
+// Kall binding umiddelbart (script ligger på slutten av body → DOM finnes allerede)
+try { bindEvents(); } catch(e){ /* hvis DOM ikke er klart enda, tar DOMContentLoaded det */ }
+// Og i tillegg på DOMContentLoaded som fallback
+document.addEventListener("DOMContentLoaded", ()=>{ try{ bindEvents(); }catch(e){} });
 </script>
 </body>
 </html>
