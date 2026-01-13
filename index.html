@@ -461,3 +461,221 @@ function startGame(){
   nextQuestion();
 }
 
+function updateHUD(){
+  byId("qNum").textContent = state.qCount;
+  byId("score").textContent = state.score;
+  byId("streak").textContent = state.streak;
+  byId("best").textContent = state.best;
+  const target = (state.rounds===Infinity? 100 : Math.max(1,state.rounds));
+  const pct = Math.min(100, Math.round(100*state.qCount/target));
+  byId("prog").style.width = pct + "%";
+}
+
+function renderQuestion(q){
+  if(!q) return;
+  byId("tenseTag").textContent = TENSE_LABEL[q.tense];
+  byId("sentence").innerHTML = q.sentenceHTML;
+  const fb = byId("feedback"); fb.style.display = "none"; fb.className = "feedback";
+  byId("tableCard").style.display="none";
+  byId("tableTitle").textContent = "Bøying – " + q.inf;
+  byId("miniTable").innerHTML = buildMiniTable(q.inf);
+  byId("nextBtn").disabled = true;
+  const input = byId("answerInput"); if(input){ input.value = ""; }
+  byId("choiceWrap").style.display = (state.mode==="choice") ? "grid" : "none";
+  byId("typeWrap").style.display   = (state.mode==="type") ? "flex" : "none";
+
+  if(state.mode==="choice"){
+    const wrap = byId("choiceWrap"); wrap.innerHTML="";
+    q.options.forEach(opt=>{
+      const btn = document.createElement("button");
+      btn.className = "choice"; btn.type="button";
+      btn.textContent = opt;
+      btn.addEventListener("click", ()=>checkAnswer(opt));
+      wrap.appendChild(btn);
+    });
+  }
+
+  if(byId("speakTgl").checked){ speak(q.readSentence); }
+}
+
+function isCorrect(input, forms){
+  const norm = normalize(input);
+  return forms.some(f => normalize(f)===norm);
+}
+
+function checkAnswer(value){
+  if(state.locked) return;
+  state.locked = true;
+  const q = state.current;
+  const ok = isCorrect(value, q.correctForms);
+  const fb = byId("feedback");
+  const sentenceClean = q.sentenceHTML.replace("___", `<b>${value}</b>`);
+  if(ok){
+    state.score += 10;
+    state.streak += 1;
+    fb.className = "feedback good";
+    fb.innerHTML = `✅ Riktig! ${sentenceClean}
+      <div class="miniTable">${buildMiniTable(q.inf)}</div>`;
+    fireConfetti();
+    if(byId("autoNextTgl").checked){
+      setTimeout(()=>{ nextQuestion(); }, 900);
+    } else {
+      byId("nextBtn").disabled = false;
+    }
+  } else {
+    state.streak = 0;
+    fb.className = "feedback bad";
+    const correctShow = q.correctForms[0];
+    fb.innerHTML = `❌ Nesten! Riktig form i denne setningen er <b>${correctShow}</b>.<br>
+      ${q.tense==="perfektum" ? "Husk: <b>har</b> + perfektum partisipp." : ""}
+      <div class="miniTable">${buildMiniTable(q.inf)}</div>`;
+    byId("nextBtn").disabled = false;
+
+    if(state.mode==="choice"){
+      document.querySelectorAll(".choice").forEach(el=>{
+        const t = normalize(el.textContent);
+        if(isCorrect(t, q.correctForms)) el.classList.add("correct");
+        if(t===normalize(value) && !isCorrect(t, q.correctForms)) el.classList.add("wrong");
+      });
+    }
+  }
+  if(state.score > state.best){ state.best = state.score; localStorage.setItem("verbBest", String(state.best)); }
+  updateHUD();
+  byId("tableCard").style.display="block";
+  state.locked = false;
+}
+
+function nextQuestion(){
+  if(state.rounds!==Infinity && state.qCount>=state.rounds){
+    endGame(); return;
+  }
+  state.qCount++;
+  updateHUD();
+  state.current = genQuestion();
+  renderQuestion(state.current);
+}
+
+function endGame(){
+  const fb = byId("feedback");
+  fb.style.display="block"; fb.className="feedback good";
+  fb.innerHTML = `👏 Flott jobba! Runde ferdig.<br>
+    Poeng: <b>${state.score}</b> • Beste: <b>${state.best}</b>
+    <div class="note">Tips: Slå på «Skriv selv» for ekstra trening.</div>`;
+  byId("nextBtn").disabled = true;
+}
+
+function setMode(val){
+  state.mode = val;
+  byId("modeChoice").classList.toggle("active", val==="choice");
+  byId("modeType").classList.toggle("active", val==="type");
+  if(state.current){ renderQuestion(state.current); }
+}
+
+function setRounds(val){
+  state.rounds = (val==="∞") ? Infinity : Number(val);
+}
+
+function setDiff(val){
+  state.diff = val;
+  byId("distractorsEasy").classList.toggle("active", val==="easy");
+  byId("distractorsHard").classList.toggle("active", val==="hard");
+}
+
+function toggleChip(e){
+  const label = e.currentTarget;
+  const cb = label.querySelector("input");
+  cb.checked = !cb.checked;
+  label.classList.toggle("active", cb.checked);
+  const tenses = Array.from(document.querySelectorAll("#tenseRow input:checked")).map(i=>i.value);
+  state.tenses = tenses;
+}
+
+/*** KONFETTI ***/
+const confettiCanvas = document.getElementById("confetti");
+const ctx = confettiCanvas.getContext("2d");
+let confettiPieces = [];
+function resizeCanvas(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function fireConfetti(){
+  const count = 90;
+  for(let i=0;i<count;i++){
+    confettiPieces.push({
+      x: confettiCanvas.width/2, y: confettiCanvas.height/3,
+      vx: (Math.random()*4-2)* (1+Math.random()*1.5),
+      vy: (Math.random()*-3-2),
+      g: 0.09 + Math.random()*0.04,
+      s: 4+Math.random()*6,
+      c: Math.random()<.33? "#7c5cff" : (Math.random()<.5? "#00e0a4" : "#ffd166"),
+      a: 1, r: Math.random()*Math.PI
+    });
+  }
+}
+function tick(){
+  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confettiPieces.forEach(p=>{
+    p.x += p.vx; p.y += p.vy; p.vy += p.g; p.r += 0.1; p.a -= 0.008;
+  });
+  confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
+  confettiPieces.forEach(p=>{
+    ctx.globalAlpha = Math.max(0,p.a);
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle = p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s);
+    ctx.restore();
+  });
+  requestAnimationFrame(tick);
+}
+tick();
+
+/*** EVENTER ***/
+document.addEventListener("DOMContentLoaded", function(){
+  byId("modeChoice").addEventListener("click", ()=>setMode("choice"));
+  byId("modeType").addEventListener("click", ()=>setMode("type"));
+
+  document.querySelectorAll("#tenseRow .chip").forEach(chip=>{
+    chip.addEventListener("click", toggleChip);
+  });
+
+  // Robust: Array.from(...) før forEach
+  Array.from(document.getElementsByName("rounds"))
+    .forEach(r=>r.addEventListener("change", (e)=>setRounds(e.target.value)));
+
+  byId("distractorsEasy").addEventListener("click", ()=>setDiff("easy"));
+  byId("distractorsHard").addEventListener("click", ()=>setDiff("hard"));
+
+  byId("startBtn").addEventListener("click", startGame);
+  byId("resetBtn").addEventListener("click", ()=>{
+    localStorage.removeItem("verbBest"); state.best=0; updateHUD();
+  });
+  byId("nextBtn").addEventListener("click", nextQuestion);
+
+  byId("checkBtn").addEventListener("click", ()=>{
+    const val = byId("answerInput").value;
+    if(!val){ byId("answerInput").focus(); return; }
+    checkAnswer(val);
+  });
+  byId("answerInput").addEventListener("keydown", (e)=>{
+    if(e.key==="Enter"){ byId("checkBtn").click(); }
+  });
+
+  byId("hintBtn").addEventListener("click", ()=>{
+    byId("tableCard").style.display = "block";
+  });
+
+  byId("speakBtn").addEventListener("click", ()=>{
+    if(state.current){ speak(state.current.readSentence); }
+  });
+
+  if(window.speechSynthesis && typeof window.speechSynthesis.addEventListener==="function"){
+    window.speechSynthesis.addEventListener("voiceschanged", function(){});
+  }
+
+  updateHUD();
+});
+</script>
+</body>
+</html>
