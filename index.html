@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="no">
 <head>
@@ -80,12 +79,13 @@
   .binHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .binTitle{font-weight:800;letter-spacing:.4px}
   .binCount{color:var(--muted);font-size:12px}
+  .slot{display:flex;flex-wrap:wrap;gap:8px;min-height:40px}
 
   .pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px}
   .tile{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 10px;
         cursor:grab;user-select:none;transition:.12s;font-weight:700}
   .tile:active{cursor:grabbing}
-  .tile.correct{background:rgba(0,224,164,.18);border-color:var(--accent2)}
+  .tile.correct{background:rgba(0,224,164,.18);border-color:var(--accent2);cursor:default}
   .tile.wrong{background:rgba(255,92,122,.18);border-color:var(--bad)}
   .tile.selected{outline:2px solid var(--accent); box-shadow:0 0 0 2px rgba(124,92,255,.35) inset}
   .bin.dropTarget{background:rgba(255,255,255,.10);border-color:var(--accent2)}
@@ -211,7 +211,7 @@
         </div>
       </div>
 
-      <aside class="card hint">
+      <aside class="card hint" id="hintCard">
         <strong>Regler i korte trekk</strong>
         <ul style="margin-top:8px">
           <li><b>Entall</b> = én / ett. <b>Flertall</b> = flere.</li>
@@ -227,10 +227,10 @@
 
 <!-- Modal for egne ord -->
 <div class="modalBackdrop" id="modal" aria-hidden="true">
-  <div class="modal">
-    <h3>Legg til eget substantiv</h3>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">Legg til eget substantiv</h3>
     <div class="grid3">
-      <div class="field"><label>Base (grunnform)</label><input id="mBase" placeholder="f.eks. stol"></div>
+      <div class="field"><label>Base (grunnform)</label><input id="mBase" placeholder="f.eks. stol" autocomplete="off"></div>
       <div class="field"><label>Kjønn</label>
         <select id="mGender">
           <option value="en">en</option>
@@ -246,10 +246,10 @@
       </div>
     </div>
     <div class="grid2" style="margin-top:8px">
-      <div class="field"><label>Entall ubestemt</label><input id="mSgInd" placeholder="stol"></div>
-      <div class="field"><label>Entall bestemt</label><input id="mSgDef" placeholder="stolen"></div>
-      <div class="field"><label>Flertall ubestemt</label><input id="mPlInd" placeholder="stoler"></div>
-      <div class="field"><label>Flertall bestemt</label><input id="mPlDef" placeholder="stolene"></div>
+      <div class="field"><label>Entall ubestemt</label><input id="mSgInd" placeholder="stol" autocomplete="off"></div>
+      <div class="field"><label>Entall bestemt</label><input id="mSgDef" placeholder="stolen" autocomplete="off"></div>
+      <div class="field"><label>Flertall ubestemt</label><input id="mPlInd" placeholder="stoler" autocomplete="off"></div>
+      <div class="field"><label>Flertall bestemt</label><input id="mPlDef" placeholder="stolene" autocomplete="off"></div>
     </div>
 
     <div class="field" style="margin-top:8px">
@@ -274,14 +274,22 @@
 </div>
 
 <script>
+/* ============================================================
+   SubstantivSpill – reparert og ferdigstilt (single-file)
+   Fix: originalfilen var avbrutt midt i JS, så event-binding/
+   init manglet. Denne versjonen inkluderer full JS + robust
+   state-handling.
+   ============================================================ */
+
 /* ====== FEILFANGER (viser feil inne i spillet) ====== */
 (function(){
   const showError = (msg) => {
-    var fb = document.getElementById('feedback');
+    const fb = document.getElementById('feedback');
     if(!fb) return;
     fb.style.display='block';
     fb.className='feedback bad';
-    fb.innerHTML = '⚠️ Feil i skript: ' + (msg || 'ukjent feil') + '<br><span class="note">Last siden på nytt. Hvis feilen kommer igjen, si ifra – jeg fikser det.</span>';
+    fb.innerHTML = '⚠️ Feil i skript: ' + (msg || 'ukjent feil') +
+      '<br><span class="note">Last siden på nytt. Hvis feilen kommer igjen, si ifra – jeg fikser det.</span>';
   };
   window.addEventListener('error', function(e){ showError(e.message); });
   window.addEventListener('unhandledrejection', function(e){ showError((e.reason && e.reason.message) || 'Ubehandlet promise-feil'); });
@@ -330,9 +338,16 @@ const PROPER_BY_THEME = {
 };
 
 /** ---------- STATE ---------- **/
-const byId = id => document.getElementById(id);
-const rand = arr => arr[Math.floor(Math.random()*arr.length)];
-const shuffle = arr => arr.sort(()=>Math.random()-0.5);
+const byId = (id) => document.getElementById(id);
+
+/* Fisher–Yates */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
 
 let state = {
   mode: "entall-flertall",
@@ -344,7 +359,7 @@ let state = {
   best: Number(localStorage.getItem("nounBest") || 0),
   selectedThemes: ["skole","butikk","helse","fritid","hjem","teknologi","familie"],
   currentItems: [], // {id, text, tags:{number,def,gender,type}}
-  selectedTileId: null
+  selectedTileId: null,
 };
 
 /** ---------- HELPERS ---------- **/
@@ -361,13 +376,28 @@ function setMode(val){
 }
 
 function updateHUD(){
-  byId("qNum").textContent = state.qNum;
-  byId("score").textContent = state.score;
-  byId("streak").textContent = state.streak;
-  byId("best").textContent = state.best;
+  byId("qNum").textContent = String(state.qNum);
+  byId("score").textContent = String(state.score);
+  byId("streak").textContent = String(state.streak);
+  byId("best").textContent = String(state.best);
   byId("roundInfo").textContent = state.placed + " / " + state.currentItems.length;
+
   const pct = state.currentItems.length ? Math.round(100*state.placed/state.currentItems.length) : 0;
   byId("prog").style.width = pct + "%";
+}
+
+function showFeedback(kind, html){
+  const fb = byId("feedback");
+  fb.style.display = "block";
+  fb.className = "feedback " + (kind==="good" ? "good" : "bad");
+  fb.innerHTML = html;
+}
+
+function clearFeedback(){
+  const fb = byId("feedback");
+  fb.style.display="none";
+  fb.className="feedback";
+  fb.innerHTML = "";
 }
 
 function nounsByThemes(){
@@ -382,7 +412,8 @@ function properByThemes(count){
   sel.forEach(t => pool = pool.concat(PROPER_BY_THEME[t] || []));
   if(pool.length===0) pool = ["Oslo","Norge","Ali","Sara"];
   pool = Array.from(new Set(pool));
-  return shuffle(pool).slice(0, count);
+  shuffle(pool);
+  return pool.slice(0, count);
 }
 
 function tokenizeForMode(){
@@ -390,9 +421,12 @@ function tokenizeForMode(){
   const size = state.size;
 
   if(state.mode === "felles-egennavn"){
-    const commons = shuffle([...nounsByThemes()]).slice(0, Math.ceil(size/2));
-    const propers = properByThemes(size - commons.length);
-    commons.forEach((n,i)=>{
+    const commons = [...nounsByThemes()];
+    shuffle(commons);
+    const commonsPick = commons.slice(0, Math.ceil(size/2));
+    const propers = properByThemes(size - commonsPick.length);
+
+    commonsPick.forEach((n,i)=>{
       items.push({ id: "c"+i, text: n.forms.sgInd, tags:{type:"fellesnavn"} });
     });
     propers.forEach((p,i)=>{
@@ -400,8 +434,9 @@ function tokenizeForMode(){
     });
   }
   else if(state.mode === "kjonn"){
-    const pick = shuffle([...nounsByThemes()]).slice(0, size);
-    pick.forEach((n,i)=>{
+    const pick = [...nounsByThemes()];
+    shuffle(pick);
+    pick.slice(0, size).forEach((n,i)=>{
       items.push({ id:"g"+i, text: n.forms.sgInd, tags:{gender:n.gender} });
     });
   }
@@ -409,16 +444,20 @@ function tokenizeForMode(){
     // entall/flertall, ubestemt/bestemt og 4-bokser bruker bøyningsformer
     const forms = [];
     nounsByThemes().forEach(n=>{
-      forms.push({text:n.forms.sgInd,  number:"entall", def:"ubestemt"});
-      forms.push({text:n.forms.sgDef,  number:"entall", def:"bestemt"});
-      forms.push({text:n.forms.plInd,  number:"flertall", def:"ubestemt"});
-      forms.push({text:n.forms.plDef,  number:"flertall", def:"bestemt"});
+      forms.push({text:n.forms.sgInd,  number:"entall",  def:"ubestemt"});
+      forms.push({text:n.forms.sgDef,  number:"entall",  def:"bestemt"});
+      forms.push({text:n.forms.plInd,  number:"flertall",def:"ubestemt"});
+      forms.push({text:n.forms.plDef,  number:"flertall",def:"bestemt"});
     });
-    const sample = shuffle(forms).slice(0, size);
-    sample.forEach((f,i)=> items.push({id:"f"+i, text:f.text, tags:{number:f.number, def:f.def}}));
+
+    shuffle(forms);
+    forms.slice(0, size).forEach((f,i)=>{
+      items.push({ id:"f"+i, text:f.text, tags:{number:f.number, def:f.def} });
+    });
   }
 
-  return shuffle(items);
+  shuffle(items);
+  return items;
 }
 
 function binsForMode(){
@@ -449,10 +488,10 @@ function binsForMode(){
   }
   // fire-bokser
   return [
-    {key:"entall-ubestemt",  title:"ENTALL • UBESTEMT"},
-    {key:"entall-bestemt",   title:"ENTALL • BESTEMT"},
-    {key:"flertall-ubestemt",title:"FLERTALL • UBESTEMT"},
-    {key:"flertall-bestemt", title:"FLERTALL • BESTEMT"},
+    {key:"entall-ubestemt",   title:"ENTALL • UBESTEMT"},
+    {key:"entall-bestemt",    title:"ENTALL • BESTEMT"},
+    {key:"flertall-ubestemt", title:"FLERTALL • UBESTEMT"},
+    {key:"flertall-bestemt",  title:"FLERTALL • BESTEMT"},
   ];
 }
 
@@ -480,12 +519,16 @@ function isCorrectForBin(item, binKey){
 function renderBoard(){
   const pool = byId("pool");
   pool.innerHTML = "";
+
+  const clickOnly = byId("clickOnly").checked;
+
   state.currentItems.forEach(it=>{
     const t = document.createElement("div");
     t.className = "tile";
     t.textContent = it.text;
-    t.draggable = !byId("clickOnly").checked;
     t.dataset.id = it.id;
+
+    t.draggable = !clickOnly;
     t.addEventListener("dragstart", onDragStart);
     t.addEventListener("click", onTileClick);
     pool.appendChild(t);
@@ -493,35 +536,52 @@ function renderBoard(){
 
   const binsEl = byId("bins");
   const bins = binsForMode();
-  binsEl.className = "bins" + (bins.length===3? " three": bins.length===4? " four" : "");
+  binsEl.className = "bins" + (bins.length===3 ? " three" : bins.length===4 ? " four" : "");
   binsEl.innerHTML = "";
+
   bins.forEach(b=>{
     const bin = document.createElement("div");
     bin.className = "bin";
     bin.dataset.key = b.key;
+
     const header = document.createElement("div");
     header.className = "binHeader";
+
     const title = document.createElement("div");
     title.className = "binTitle";
     title.textContent = b.title;
+
     const count = document.createElement("div");
     count.className = "binCount";
     count.textContent = "0";
-    header.appendChild(title); header.appendChild(count);
+
+    header.appendChild(title);
+    header.appendChild(count);
+
     const slot = document.createElement("div");
     slot.className = "slot";
-    bin.appendChild(header); bin.appendChild(slot);
+
+    bin.appendChild(header);
+    bin.appendChild(slot);
 
     // DnD
-    bin.addEventListener("dragover", e=>{e.preventDefault(); bin.classList.add("dropTarget");});
+    bin.addEventListener("dragover", e=>{
+      if(clickOnly) return;
+      e.preventDefault();
+      bin.classList.add("dropTarget");
+    });
     bin.addEventListener("dragleave", ()=>bin.classList.remove("dropTarget"));
     bin.addEventListener("drop", e=>{
-      e.preventDefault(); bin.classList.remove("dropTarget");
+      if(clickOnly) return;
+      e.preventDefault();
+      bin.classList.remove("dropTarget");
       const id = e.dataTransfer.getData("text/plain");
       placeTileInBin(id, b.key, bin);
     });
+
     // Klikk-tilordning
     bin.addEventListener("click", ()=>{
+      if(!clickOnly) return; // i dragemodus: unngå utilsiktet plassering
       const id = state.selectedTileId;
       if(id) placeTileInBin(id, b.key, bin);
     });
@@ -529,19 +589,25 @@ function renderBoard(){
     binsEl.appendChild(bin);
   });
 
-  byId("feedback").style.display="none";
-  byId("feedback").className="feedback";
+  clearFeedback();
   byId("nextBtn").disabled = true;
 }
 
 function onDragStart(e){
   e.dataTransfer.setData("text/plain", e.currentTarget.dataset.id);
 }
+
 function onTileClick(e){
+  if(!byId("clickOnly").checked) return; // kun i klikkmodus
+
   const was = state.selectedTileId;
   const id = e.currentTarget.dataset.id;
+
   Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
-  if(was===id){ state.selectedTileId=null; return; }
+  if(was === id){
+    state.selectedTileId = null;
+    return;
+  }
   state.selectedTileId = id;
   e.currentTarget.classList.add("selected");
 }
@@ -549,26 +615,34 @@ function onTileClick(e){
 function placeTileInBin(id, binKey, binEl){
   const item = state.currentItems.find(x=>x.id===id);
   if(!item) return;
-  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+
+  const tile = document.querySelector(`.tile[data-id="${CSS.escape(id)}"]`);
   if(!tile) return;
 
   const ok = isCorrectForBin(item, binKey);
+
   tile.classList.remove("selected");
+
   if(ok){
     tile.classList.add("correct");
     tile.draggable = false;
+    tile.style.pointerEvents = "none";
+
     state.placed += 1;
     state.score += 10;
     state.streak += 1;
+
     const slot = binEl.querySelector(".slot");
     slot.appendChild(tile);
+
     const countEl = binEl.querySelector(".binCount");
-    countEl.textContent = String((slot.querySelectorAll(".tile").length)||0);
+    countEl.textContent = String(slot.querySelectorAll(".tile").length);
   }else{
     tile.classList.add("wrong");
     state.streak = 0;
     setTimeout(()=>tile.classList.remove("wrong"), 550);
   }
+
   state.selectedTileId = null;
   updateHUD();
 
@@ -578,10 +652,11 @@ function placeTileInBin(id, binKey, binEl){
 }
 
 function roundComplete(){
-  const fb = byId("feedback");
-  fb.style.display="block"; fb.className="feedback good";
-  fb.innerHTML = `🎉 Flott! Du sorterte alle ordene.<br>Poeng denne runden: <b>${state.currentItems.length*10}</b>`;
+  showFeedback("good",
+    `🎉 Flott! Du sorterte alle ordene.<br>Poeng denne runden: <b>${state.currentItems.length*10}</b>`
+  );
   fireConfetti();
+
   if(state.score > state.best){
     state.best = state.score;
     localStorage.setItem("nounBest", String(state.best));
@@ -594,98 +669,305 @@ function roundComplete(){
 function startRound(){
   state.qNum += 1;
   state.placed = 0;
+  state.selectedTileId = null;
   state.currentItems = tokenizeForMode();
   renderBoard();
   updateHUD();
 }
 
 function startGame(){
-  state.score = 0; state.streak=0; state.qNum=0;
+  state.score = 0;
+  state.streak = 0;
+  state.qNum = 0;
   startRound();
 }
 
 /** ---------- KONFETTI ---------- **/
-const confettiCanvas = document.getElementById("confetti");
-const ctx = confettiCanvas.getContext("2d");
+const confettiCanvas = byId("confetti");
+const ctx = confettiCanvas.getContext("2d", { alpha: true });
 let confettiPieces = [];
-function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
-window.addEventListener("resize", resizeCanvas); resizeCanvas();
+
+function resizeCanvas(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
 function fireConfetti(){
   for(let i=0;i<90;i++){
     confettiPieces.push({
-      x: confettiCanvas.width/2, y: confettiCanvas.height/3,
+      x: confettiCanvas.width/2,
+      y: confettiCanvas.height/3,
       vx: (Math.random()*4-2)*(1+Math.random()*1.5),
-      vy: (Math.random()*-3-2), g: 0.09+Math.random()*0.04,
-      s: 4+Math.random()*6, c: (Math.random()<.33?"#7c5cff":(Math.random()<.5?"#00e0a4":"#ffd166")),
-      a:1, r:Math.random()*Math.PI
+      vy: (Math.random()*-3-2),
+      g: 0.09+Math.random()*0.04,
+      s: 4+Math.random()*6,
+      c: (Math.random()<.33?"#7c5cff":(Math.random()<.5?"#00e0a4":"#ffd166")),
+      a: 1,
+      r: Math.random()*Math.PI
     });
   }
 }
+
 (function loop(){
   ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-  confettiPieces.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.r+=0.1; p.a-=0.008; });
-  confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
+
   confettiPieces.forEach(p=>{
-    ctx.globalAlpha=Math.max(0,p.a); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
-    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += p.g;
+    p.r += 0.1;
+    p.a -= 0.008;
   });
+  confettiPieces = confettiPieces.filter(p=>p.a>0 && p.y<confettiCanvas.height+20);
+
+  confettiPieces.forEach(p=>{
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.a);
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.r);
+    ctx.fillStyle = p.c;
+    ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s);
+    ctx.restore();
+  });
+
   requestAnimationFrame(loop);
 })();
 
 /** ---------- MODAL: EGNE ORD ---------- **/
-function openModal(){ const m=byId("modal"); m.style.display="grid"; m.setAttribute('aria-hidden','false'); }
-function closeModal(){ const m=byId("modal"); m.style.display="none"; m.setAttribute('aria-hidden','true'); }
+function openModal(){
+  const m = byId("modal");
+  m.style.display="grid";
+  m.setAttribute("aria-hidden","false");
+  // nullstill tidligere valg
+  byId("mBase").value = "";
+  byId("mSgInd").value = "";
+  byId("mSgDef").value = "";
+  byId("mPlInd").value = "";
+  byId("mPlDef").value = "";
+  byId("mGender").value = "en";
+  byId("mType").value = "fellesnavn";
+  Array.from(byId("mThemes").querySelectorAll(".tag")).forEach(t=>t.classList.remove("active"));
+  byId("mBase").focus();
+}
+function closeModal(){
+  const m = byId("modal");
+  m.style.display="none";
+  m.setAttribute("aria-hidden","true");
+}
+
 function suggestForms(){
   const base = byId("mBase").value.trim();
   const gender = byId("mGender").value;
   if(!base) return;
+
   const sgInd = base;
-  const sgDef = (gender==="en"? base+"en" : gender==="ei"? base+"a" : base+"et");
+  const sgDef = (gender==="en" ? base+"en" : gender==="ei" ? base+"a" : base+"et");
+
   let plInd = base + "er";
   let plDef = base + "ene";
+
   const invariants = ["hus","barn","apotek","språk","brød"];
-  if(invariants.includes(base)){ plInd = base; plDef = (base==="brød")? "brødene" : base+"ene"; }
-  byId("mSgInd").value = sgInd;
-  byId("mSgDef").value = sgDef;
-  byId("mPlInd").value = plInd;
-  byId("mPlDef").value = plDef;
+  if(invariants.includes(base)){
+    plInd = base;
+    plDef = (base==="brød") ? "brødene" : base + "ene";
+  }
+
+  // Bare fyll hvis feltet er tomt (ikke overstyr brukerens endringer)
+  if(!byId("mSgInd").value.trim()) byId("mSgInd").value = sgInd;
+  if(!byId("mSgDef").value.trim()) byId("mSgDef").value = sgDef;
+  if(!byId("mPlInd").value.trim()) byId("mPlInd").value = plInd;
+  if(!byId("mPlDef").value.trim()) byId("mPlDef").value = plDef;
 }
+
 function collectThemesFromModal(){
   return Array.from(byId("mThemes").querySelectorAll(".tag.active")).map(el=>el.dataset.v);
 }
+
 function saveWordFromModal(){
   const base = byId("mBase").value.trim();
   const gender = byId("mGender").value;
   const type = byId("mType").value;
+
   const sgInd = byId("mSgInd").value.trim();
   const sgDef = byId("mSgDef").value.trim();
   const plInd = byId("mPlInd").value.trim();
   const plDef = byId("mPlDef").value.trim();
+
   const themes = collectThemesFromModal();
+
   if(!base || !gender || !sgInd || !sgDef || !plInd || !plDef){
-    alert("Fyll inn alle former (entall/flertall, ubestemt/bestemt)."); return;
+    alert("Fyll inn alle former (entall/flertall, ubestemt/bestemt).");
+    return;
   }
-  if(type==="egennavn"){
-    themes.forEach(t=>{
-      PROPER_BY_THEME[t] = (PROPER_BY_THEME[t]||[]);
-      PROPER_BY_THEME[t].push(base.charAt(0).toUpperCase() + base.slice(1));
+
+  if(type === "egennavn"){
+    const proper = base.charAt(0).toUpperCase() + base.slice(1);
+    const targets = themes.length ? themes : ["fritid"];
+    targets.forEach(t=>{
+      PROPER_BY_THEME[t] = (PROPER_BY_THEME[t] || []);
+      PROPER_BY_THEME[t].push(proper);
       PROPER_BY_THEME[t] = Array.from(new Set(PROPER_BY_THEME[t]));
     });
-  } else {
+  }else{
     NOUNS.push({
-      base, gender,
-      forms:{sgInd, sgDef, plInd, plDef},
+      base,
+      gender,
+      forms:{ sgInd, sgDef, plInd, plDef },
       type:"fellesnavn",
-      themes: themes.length? themes : ["fritid"]
+      themes: themes.length ? themes : ["fritid"],
     });
   }
+
   closeModal();
   alert("Lagt til! Start en ny runde for å se ordet.");
 }
 
+/** ---------- UI ACTIONS ---------- **/
+function shufflePoolTiles(){
+  // Bland kun rekkefølge visuelt (ikke data)
+  const pool = byId("pool");
+  const tiles = Array.from(pool.querySelectorAll(".tile"));
+  shuffle(tiles).forEach(t=>pool.appendChild(t));
+}
+
+function showHintPopup(){
+  // Lite, nyttig hint i feedback-boksen (uten å skjule siden)
+  const m = {
+    "entall-flertall": "Entall = én/ett (stol, huset). Flertall = flere (stoler, husene).",
+    "ubestemt-bestemt": "Ubestemt (en stol / stoler) vs. Bestemt (stolen / stolene).",
+    "felles-egennavn": "Fellesnavn = vanlig ord (stol). Egennavn = navn (Oslo, IKEA).",
+    "kjonn": "Se etter en/ei/et-ord: en stol, ei bok, et hus.",
+    "fire-bokser": "Sorter etter både tall og bestemt/ubestemt: entall/flertall + ubestemt/bestemt."
+  };
+  showFeedback("good", "💡 " + (m[state.mode] || "Velg et ord og sorter det i riktig boks."));
+}
+
 /** ---------- EVENTS (ROBUST BINDING) ---------- **/
 function bindEvents(){
-  // Modus
+  // Modus: radioknapper i chips
   Array.from(document.querySelectorAll("#modeRow .chip")).forEach(label=>{
     label.addEventListener("click", ()=>{
       Array.from(document.querySelectorAll("#modeRow .chip")).forEach(l=>l.classList.remove("active"));
+      label.classList.add("active");
+
+      const input = label.querySelector('input[type="radio"]');
+      if(input){ input.checked = true; setMode(input.value); }
+
+      // Hvis det allerede pågår en runde, start en ny slik at boksene matcher valgt modus
+      if(state.qNum > 0){
+        startRound();
+      }else{
+        renderBoard();
+        updateHUD();
+      }
+    });
+  });
+
+  // Tema: checkbox chips
+  Array.from(document.querySelectorAll("#themeRow .chip")).forEach(label=>{
+    label.addEventListener("click", (e)=>{
+      // Ikke dobbelt-toggle hvis klikk treffer selve input
+      const input = label.querySelector('input[type="checkbox"]');
+      if(!input) return;
+
+      if(e.target !== input){
+        input.checked = !input.checked;
+      }
+
+      label.classList.toggle("active", input.checked);
+
+      const chosen = Array.from(document.querySelectorAll('#themeRow input[type="checkbox"]:checked')).map(x=>x.value);
+      if(chosen.length === 0){
+        // Ikke tillat helt tomt
+        input.checked = true;
+        label.classList.add("active");
+        showFeedback("bad", "Velg minst ett tema.");
+        return;
+      }
+
+      state.selectedThemes = chosen;
+      clearFeedback();
+
+      if(state.qNum > 0){
+        startRound();
+      }
+    });
+  });
+
+  // Vanskelighetsgrad
+  Array.from(document.querySelectorAll('input[name="diff"]')).forEach(inp=>{
+    inp.addEventListener("change", ()=>{
+      state.size = Number(inp.value || 8);
+      Array.from(document.querySelectorAll("#easy, #hard")).forEach(l=>l.classList.remove("active"));
+      (inp.value==="12" ? byId("hard") : byId("easy")).classList.add("active");
+      if(state.qNum > 0) startRound();
+    });
+  });
+
+  // Klikkmodus
+  byId("clickOnly").addEventListener("change", ()=>{
+    // Oppdater brettet så draggable/click-handling blir riktig
+    if(state.qNum > 0) startRound();
+    else renderBoard();
+  });
+
+  // Start / Neste / Bland / Hint
+  byId("startBtn").addEventListener("click", startGame);
+  byId("nextBtn").addEventListener("click", startRound);
+  byId("shuffleBtn").addEventListener("click", ()=>{
+    if(state.qNum === 0){ showFeedback("bad", "Trykk Start først."); return; }
+    shufflePoolTiles();
+  });
+  byId("hintBtn").addEventListener("click", showHintPopup);
+
+  // Reset best
+  byId("resetBtn").addEventListener("click", ()=>{
+    state.best = 0;
+    localStorage.setItem("nounBest","0");
+    updateHUD();
+    showFeedback("good", "Beste poengsum er tilbakestilt.");
+  });
+
+  // Modal: åpne/lukk/lagre
+  byId("addWordBtn").addEventListener("click", openModal);
+  byId("mCancel").addEventListener("click", closeModal);
+  byId("mSave").addEventListener("click", saveWordFromModal);
+
+  // Klikk utenfor modalen lukker
+  byId("modal").addEventListener("click", (e)=>{
+    if(e.target === byId("modal")) closeModal();
+  });
+
+  // Modal tags toggle
+  Array.from(byId("mThemes").querySelectorAll(".tag")).forEach(tag=>{
+    tag.addEventListener("click", ()=>{
+      tag.classList.toggle("active");
+    });
+  });
+
+  // Autofyll former
+  byId("mBase").addEventListener("input", ()=>{ suggestForms(); });
+  byId("mGender").addEventListener("change", ()=>{ suggestForms(); });
+
+  // Escape lukker modal og avvelger tile i klikkmodus
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      if(byId("modal").style.display === "grid") closeModal();
+      state.selectedTileId = null;
+      Array.from(document.querySelectorAll(".tile")).forEach(el=>el.classList.remove("selected"));
+    }
+  });
+}
+
+/** ---------- INIT ---------- **/
+(function init(){
+  setMode(state.mode);
+  updateHUD();
+  renderBoard();   // vis tomt brett før start
+  bindEvents();
+})();
+</script>
+</body>
+</html>
